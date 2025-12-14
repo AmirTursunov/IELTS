@@ -9,7 +9,15 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/nodemailer": "^7.0.4",
+    "bcryptjs": "^3.0.3",
+    "cloudinary": "^2.8.0",
+    "jsonwebtoken": "^9.0.2",
+    "lucide-react": "^0.555.0",
+    "mongoose": "^9.0.0",
     "next": "16.0.5",
+    "nodemailer": "^7.0.11",
     "react": "19.2.0",
     "react-dom": "19.2.0"
   },
