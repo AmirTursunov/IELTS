@@ -1,19 +1,15 @@
 // app/page.tsx
 "use client";
 
-import React from "react";
 import Link from "next/link";
 import {
-  BookOpen,
   Users,
   Award,
   TrendingUp,
-  Target,
-  Clock,
-  Globe,
   ArrowRight,
   Star,
-  CheckCircle,
+  Instagram,
+  InstagramIcon,
 } from "lucide-react";
 
 export default function HomePage() {
@@ -53,28 +49,12 @@ export default function HomePage() {
 
   const teachers = [
     {
-      name: "Sarah Johnson",
+      name: "Tursunov Umidjon",
       role: "IELTS Expert & Lead Instructor",
-      band: "Band 9 Holder",
+      band: "Band 8 Holder",
       students: "500+",
-      image: "https://i.pravatar.cc/150?img=1",
-      specialization: "Writing & Speaking",
-    },
-    {
-      name: "Michael Chen",
-      role: "Senior IELTS Trainer",
-      band: "Band 8.5 Holder",
-      students: "450+",
-      image: "https://i.pravatar.cc/150?img=3",
-      specialization: "Reading & Listening",
-    },
-    {
-      name: "Emma Wilson",
-      role: "IELTS Specialist",
-      band: "Band 9 Holder",
-      students: "380+",
-      image: "https://i.pravatar.cc/150?img=5",
-      specialization: "Grammar & Vocabulary",
+      image: "./imumeed.jpg",
+      specialization: "IELTS",
     },
   ];
 
@@ -250,18 +230,18 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
             <div className="inline-block bg-purple-100 text-purple-700 px-5 py-2.5 rounded-full font-bold mb-4 border-2 border-purple-200">
-              Our Expert Team
+              Our Expert Teacher
             </div>
             <h2 className="text-4xl lg:text-5xl font-black text-gray-900 mb-4">
-              Learn From IELTS Experts
+              Learn From IELTS Expert
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            {/* <p className="text-xl text-gray-600 max-w-3xl mx-auto">
               All our instructors are certified IELTS trainers with Band 8.5+
               scores
-            </p>
+            </p> */}
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="flex items-center justify-center">
             {teachers.map((teacher, idx) => (
               <div
                 key={idx}
@@ -273,7 +253,7 @@ export default function HomePage() {
                     alt={teacher.name}
                     className="w-32 h-32 rounded-full mx-auto border-4 border-white shadow-xl group-hover:scale-105 transition-transform"
                   />
-                  <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-linear-to-r from-yellow-400 to-orange-400 text-white px-4 py-1.5 rounded-full font-black text-sm shadow-lg">
+                  <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-linear-to-r from-yellow-400 to-orange-400 text-white px-2 py-1.5 rounded-full font-black text-sm shadow-lg">
                     {teacher.band}
                   </div>
                 </div>
@@ -292,6 +272,15 @@ export default function HomePage() {
                     <span className="font-semibold">
                       {teacher.students} Students Taught
                     </span>
+                  </div>
+                  <div className="flex items-center justify-center gap-2 text-gray-600 text-sm mt-3">
+                    <InstagramIcon className="w-4 h-4" />
+                    <a
+                      href="https://www.instagram.com/imumeed/"
+                      className="font-semibold hover:text-cyan-500 transition-colors"
+                    >
+                      imumeed
+                    </a>
                   </div>
                 </div>
               </div>

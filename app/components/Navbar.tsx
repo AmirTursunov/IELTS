@@ -14,6 +14,7 @@ import {
   Clock,
   User,
   LogOut,
+  LucideHome,
 } from "lucide-react";
 
 export default function Navbar() {
@@ -24,6 +25,7 @@ export default function Navbar() {
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   const navLinks = [
+    { name: "Home", href: "/", available: true, icon: LucideHome },
     {
       name: "Listening",
       href: "/listening",

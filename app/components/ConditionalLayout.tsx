@@ -1,4 +1,4 @@
-// components/ConditionalLayout.tsx
+// app/components/ConditionalLayout.tsx
 "use client";
 
 import { usePathname } from "next/navigation";
@@ -12,18 +12,37 @@ export default function ConditionalLayout({
 }) {
   const pathname = usePathname();
 
-  // Paths where navbar and footer should be hidden
-  const hideLayoutPaths = ["/sign-in", "/sign-up"];
-  const isAdminPath = pathname?.startsWith("/admin");
+  // Navbar va Footer ko'rinmaydigan sahifalar ro'yxati
+  const hideLayoutPaths = [
+    "/sign-in",
+    "/sign-up",
+    "/listening/", // /listening/[id] uchun
+    "/reading/", // /reading/[id] uchun (kelajakda)
+    "/writing/", // /writing/[id] uchun (kelajakda)
+    "/speaking/", // /speaking/[id] uchun (kelajakda)
+  ];
 
-  const shouldHideLayout =
-    hideLayoutPaths.includes(pathname || "") || isAdminPath;
+  // Agar pathname ro'yxatdagi path bilan boshlanayotgan bo'lsa, layout ko'rsatilmasin
+  const shouldHideLayout = hideLayoutPaths.some((path) =>
+    pathname?.startsWith(path)
+  );
+
+  // Agar /listening yoki /reading page bo'lsa (ID siz), layout ko'rsatilsin
+  const isListPage =
+    pathname === "/listening" ||
+    pathname === "/reading" ||
+    pathname === "/writing" ||
+    pathname === "/speaking";
+
+  if (shouldHideLayout && !isListPage) {
+    return <>{children}</>;
+  }
 
   return (
     <>
-      {!shouldHideLayout && <Navbar />}
+      <Navbar />
       {children}
-      {!shouldHideLayout && <Footer />}
+      <Footer />
     </>
   );
 }

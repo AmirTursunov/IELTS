@@ -1,6 +1,9 @@
+// app/reading/page.tsx
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import Link from "next/link";
 import {
   BookOpen,
   Clock,
@@ -8,6 +11,7 @@ import {
   Filter,
   Loader2,
   Award,
+  User,
 } from "lucide-react";
 
 const API_BASE = "/api";
@@ -22,10 +26,12 @@ interface Test {
   passages?: any[];
 }
 
-export default function HomePage() {
+export default function ReadingTestsPage() {
+  const { data: session, status } = useSession();
   const [readingTests, setReadingTests] = useState<Test[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "Academic" | "General">("all");
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -38,8 +44,6 @@ export default function HomePage() {
       const response = await fetch(`${API_BASE}/reading`);
       const result = await response.json();
 
-      console.log("Loading tests:", result);
-
       if (result.success) {
         setReadingTests(result.data);
       }
@@ -51,11 +55,16 @@ export default function HomePage() {
   };
 
   const startTest = (testId: string) => {
+    // Check authentication
+    if (!session) {
+      setShowAuthModal(true);
+      return;
+    }
+
     if (!testId || testId === "undefined") {
       alert("Invalid test ID");
       return;
     }
-    console.log("Starting test:", testId);
     router.push(`/reading/${testId}?part=0`);
   };
 
@@ -77,7 +86,7 @@ export default function HomePage() {
     }
   };
 
-  if (loading) {
+  if (loading || status === "loading") {
     return (
       <div className="min-h-screen bg-linear-to-br from-blue-50 via-cyan-50 to-teal-50 flex items-center justify-center">
         <div className="text-center">
@@ -90,29 +99,44 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-linear-to-br from-blue-50 via-cyan-50 to-teal-50">
-      {/* Header */}
-      <header className="bg-linear-to-r from-cyan-600 to-blue-700 shadow-lg border-b border-cyan-500/20">
-        <div className="max-w-7xl mx-auto px-6 py-5">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="bg-white text-cyan-600 px-5 py-2 rounded-lg font-bold text-xl shadow-md">
-                IELTS
+      {/* Auth Required Modal */}
+      {showAuthModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 border-2 border-cyan-200">
+            <div className="text-center">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-4">
+                <User className="w-8 h-8 text-red-600" />
               </div>
-              <h1 className="text-2xl font-bold text-white">
-                Mock Exam Platform
-              </h1>
-            </div>
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => router.push("/admin")}
-                className="px-5 py-2 text-white bg-white/10 hover:bg-white/20 rounded-lg font-medium transition-all backdrop-blur-sm border border-white/20"
+              <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                Authentication Required
+              </h3>
+              <p className="text-gray-600 mb-6">
+                You need to sign in or create an account to take this test.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowAuthModal(false)}
+                  className="flex-1 px-6 py-3 border-2 border-gray-300 rounded-xl text-gray-700 font-semibold hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <Link
+                  href="/sign-in"
+                  className="flex-1 px-6 py-3 bg-linear-to-r from-cyan-500 to-blue-600 text-white rounded-xl font-semibold hover:from-cyan-600 hover:to-blue-700 shadow-md text-center"
+                >
+                  Sign In
+                </Link>
+              </div>
+              <Link
+                href="/sign-up"
+                className="block mt-3 text-sm text-cyan-600 hover:text-cyan-700 font-semibold"
               >
-                Admin Panel
-              </button>
+                Don't have an account? Sign up
+              </Link>
             </div>
           </div>
         </div>
-      </header>
+      )}
 
       <main className="max-w-7xl mx-auto px-6 py-12">
         {/* Hero Section */}
@@ -169,6 +193,8 @@ export default function HomePage() {
             General Training
           </button>
         </div>
+
+        {/* Stats */}
         {filteredReading.length > 0 && (
           <div className="mt-10 mb-10 bg-white rounded-xl shadow-md p-5 border border-cyan-100">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
@@ -207,6 +233,7 @@ export default function HomePage() {
             </div>
           </div>
         )}
+
         {/* Tests Grid */}
         {filteredReading.length === 0 ? (
           <div className="text-center py-20 bg-white rounded-2xl shadow-lg border border-cyan-100">
