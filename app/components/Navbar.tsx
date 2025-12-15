@@ -24,7 +24,6 @@ export default function Navbar() {
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   const navLinks = [
-    { name: "Home", href: "/" },
     {
       name: "Listening",
       href: "/listening",
