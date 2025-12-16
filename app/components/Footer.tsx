@@ -1,5 +1,3 @@
-// components/Footer.tsx
-import React from "react";
 import Link from "next/link";
 import {
   Facebook,
@@ -21,7 +19,7 @@ export default function Footer() {
 
   const resources = [
     { name: "Study Materials", href: "/materials" },
-    { name: "Practice Tests", href: "/tests" },
+    { name: "Practice Tests", href: "/reading" },
     { name: "Blog", href: "/blog" },
     { name: "FAQ", href: "/faq" },
   ];
@@ -58,7 +56,7 @@ export default function Footer() {
           {/* Brand */}
           <div className="lg:col-span-2">
             <div className="flex items-center gap-3 mb-6">
-              <div className="bg-linear-to-r from-cyan-500 to-blue-600 px-5 py-2.5 rounded-xl font-black text-2xl shadow-lg">
+              <div className="bg-[#9C74FF] px-5 py-2.5 rounded-xl font-black text-2xl shadow-lg">
                 IELTS
               </div>
               <span className="text-xl font-black">Mock Exam</span>
@@ -153,7 +151,7 @@ export default function Footer() {
                 placeholder="Enter your email"
                 className="flex-1 px-6 py-3 rounded-xl bg-gray-800 border-2 border-gray-700 focus:border-cyan-500 focus:outline-none text-white"
               />
-              <button className="px-8 py-3 bg-linear-to-r from-cyan-500 to-blue-600 rounded-xl font-bold hover:from-cyan-600 hover:to-blue-700 transition-all shadow-lg">
+              <button className="px-8 py-3 bg-linear-to-r bg-[#9C74FF] rounded-xl font-bold hover:bg-[#5e2ae0] transition-all shadow-lg">
                 Subscribe
               </button>
             </div>

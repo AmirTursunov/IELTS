@@ -1,4 +1,4 @@
-// components/Navbar.tsx
+// components/Navbar.tsx - Practice Tests Dropdown Menu
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
@@ -15,34 +15,58 @@ import {
   User,
   LogOut,
   LucideHome,
+  ChevronDown,
+  BookMarked,
+  GraduationCap,
+  CheckCircle,
+  Sparkles,
 } from "lucide-react";
+import Logo from "./Logo";
 
 export default function Navbar() {
   const { data: session, status } = useSession();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showPracticeMenu, setShowPracticeMenu] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const practiceMenuRef = useRef<HTMLDivElement>(null);
 
-  const navLinks = [
-    { name: "Home", href: "/", available: true, icon: LucideHome },
+  const practiceTests = [
     {
       name: "Listening",
       href: "/listening",
       icon: Headphones,
       available: true,
+      color: "from-cyan-500 to-blue-500",
+      description: "Audio-based comprehension",
     },
-    { name: "Reading", href: "/reading", icon: BookOpen, available: true },
-    { name: "Writing", href: "/writing", icon: PenTool, available: false },
+    {
+      name: "Reading",
+      href: "/reading",
+      icon: BookOpen,
+      available: true,
+      color: "from-purple-500 to-pink-500",
+      description: "Text comprehension tests",
+    },
+    {
+      name: "Writing",
+      href: "/writing",
+      icon: PenTool,
+      available: false,
+      color: "from-orange-500 to-red-500",
+      description: "Essay & task writing",
+    },
     {
       name: "Speaking",
       href: "/speaking",
       icon: MessageSquare,
       available: false,
+      color: "from-green-500 to-teal-500",
+      description: "Oral communication",
     },
   ];
 
-  // Close user menu when clicking outside
+  // Close menus when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
@@ -50,6 +74,12 @@ export default function Navbar() {
         !userMenuRef.current.contains(event.target as Node)
       ) {
         setShowUserMenu(false);
+      }
+      if (
+        practiceMenuRef.current &&
+        !practiceMenuRef.current.contains(event.target as Node)
+      ) {
+        setShowPracticeMenu(false);
       }
     }
 
@@ -62,75 +92,129 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="bg-[#9C74FF] px-5 py-2.5 rounded-xl font-black text-2xl text-white shadow-lg group-hover:scale-105 transition-transform">
-              IELTS
-            </div>
-            <span className="text-xl font-black text-gray-800 hidden md:block">
-              Mock Exam
-            </span>
-          </Link>
+          <Logo />
 
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center gap-8">
-            {navLinks.map((link) => (
-              <div
-                key={link.name}
-                className="relative"
-                onMouseEnter={() => setHoveredItem(link.name)}
-                onMouseLeave={() => setHoveredItem(null)}
-              >
-                {link.available ? (
-                  <Link
-                    href={link.href}
-                    className="flex items-center gap-2 text-gray-700 hover:text-blue-600 font-bold transition-colors group"
-                  >
-                    {link.icon && (
-                      <link.icon className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                    )}
-                    <span>{link.name}</span>
-                  </Link>
-                ) : (
-                  <button className="flex items-center gap-2 text-gray-700 hover:text-blue-600 font-bold transition-colors group cursor-not-allowed">
-                    {link.icon && (
-                      <link.icon className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                    )}
-                    <span>{link.name}</span>
-                  </button>
-                )}
+            {/* Home Link */}
+            <Link
+              href="/"
+              className="flex items-center gap-2 text-gray-700 hover:text-[#9C74FF] font-bold transition-colors group"
+            >
+              <LucideHome className="w-5 h-5 group-hover:scale-110 transition-transform" />
+              <span>Home</span>
+            </Link>
 
-                {/* Coming Soon Dropdown */}
-                {!link.available && hoveredItem === link.name && (
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-64 bg-white rounded-xl shadow-2xl border-2 border-blue-200 p-4 animate-in fade-in slide-in-from-top-2">
-                    <div className="flex items-start gap-3">
-                      <div className="bg-linear-to-br from-yellow-400 to-orange-400 p-2 rounded-lg">
-                        <Clock className="w-5 h-5 text-white" />
-                      </div>
-                      <div>
-                        <h4 className="font-bold text-gray-900 mb-1">
-                          Coming Soon!
-                        </h4>
-                        <p className="text-sm text-gray-600">
-                          We're working hard to bring you {link.name} practice
-                          tests. Stay tuned!
-                        </p>
-                      </div>
+            {/* Practice Tests Dropdown */}
+            <div className="relative" ref={practiceMenuRef}>
+              <button
+                onClick={() => setShowPracticeMenu(!showPracticeMenu)}
+                onMouseEnter={() => setShowPracticeMenu(true)}
+                className="flex items-center gap-2 text-gray-700 hover:text-[#9C74FF] font-bold transition-colors group"
+              >
+                <GraduationCap className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                <span>Practice Tests</span>
+                <ChevronDown
+                  className={`w-4 h-4 transition-transform duration-200 ${
+                    showPracticeMenu ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+
+              {/* Dropdown Menu */}
+              {showPracticeMenu && (
+                <div
+                  onMouseLeave={() => setShowPracticeMenu(false)}
+                  className="absolute top-full left-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border-2 border-gray-100 py-3 z-50 animate-in fade-in slide-in-from-top-2 duration-200"
+                >
+                  <div className="px-4 py-2 border-b border-gray-100">
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">
+                      Choose Your Test
+                    </p>
+                  </div>
+
+                  {practiceTests.map((test) => (
+                    <div key={test.name}>
+                      {test.available ? (
+                        <Link
+                          href={test.href}
+                          onClick={() => setShowPracticeMenu(false)}
+                          className="flex items-start gap-3 px-4 py-3 hover:bg-gradient-to-r hover:from-purple-50 hover:to-blue-50 transition-all group"
+                        >
+                          <div
+                            className={`p-2.5 bg-gradient-to-br ${test.color} rounded-xl group-hover:scale-110 transition-transform shadow-md`}
+                          >
+                            <test.icon className="w-5 h-5 text-white" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-bold text-gray-900 group-hover:text-[#9C74FF] transition-colors">
+                                {test.name}
+                              </h4>
+                              <CheckCircle className="w-4 h-4 text-green-500" />
+                            </div>
+                            <p className="text-xs text-gray-600 mt-0.5">
+                              {test.description}
+                            </p>
+                          </div>
+                        </Link>
+                      ) : (
+                        <div className="px-4 py-3 opacity-60 cursor-not-allowed hover:bg-gray-50 transition-colors">
+                          <div className="flex items-start gap-3">
+                            <div
+                              className={`p-2.5 bg-gradient-to-br ${test.color} rounded-xl opacity-50`}
+                            >
+                              <test.icon className="w-5 h-5 text-white" />
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <h4 className="font-bold text-gray-500">
+                                  {test.name}
+                                </h4>
+                                <div className="flex items-center gap-1 px-2 py-0.5 bg-yellow-100 rounded-full">
+                                  <Clock className="w-3 h-3 text-yellow-600" />
+                                  <span className="text-xs font-bold text-yellow-700">
+                                    Soon
+                                  </span>
+                                </div>
+                              </div>
+                              <p className="text-xs text-gray-500 mt-0.5">
+                                {test.description}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <div className="mt-3 pt-3 border-t border-gray-200">
-                      <p className="text-xs text-gray-500 font-semibold">
-                        🚀 Expected launch: Q1 2025
-                      </p>
+                  ))}
+
+                  {/* Footer Info */}
+                  <div className="px-4 py-3 mt-2 border-t border-gray-100 bg-gradient-to-r from-blue-50 to-purple-50 rounded-b-2xl">
+                    <div className="flex items-center gap-2 text-xs text-gray-700">
+                      <Sparkles className="w-4 h-4 text-[#9C74FF]" />
+                      <span className="font-semibold">
+                        All tests follow official IELTS format
+                      </span>
                     </div>
                   </div>
-                )}
-              </div>
-            ))}
+                </div>
+              )}
+            </div>
+
+            {/* Blog Link */}
+            <Link
+              href="/blog"
+              className="flex items-center gap-2 text-gray-700 hover:text-[#9C74FF] font-bold transition-colors group"
+            >
+              <BookMarked className="w-5 h-5 group-hover:scale-110 transition-transform" />
+              <span>Blog</span>
+            </Link>
           </div>
 
           {/* Right Side - Auth Section */}
           <div className="hidden lg:flex items-center gap-4">
             {status === "loading" ? (
-              <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+              <div className="w-8 h-8 border-2 border-[#9C74FF] border-t-transparent rounded-full animate-spin"></div>
             ) : session ? (
               <div className="relative" ref={userMenuRef}>
                 <button
@@ -140,11 +224,11 @@ export default function Navbar() {
                   {session.user.image ? (
                     <img
                       src={session.user.image}
-                      //   alt={session.user.name}
+                      alt={session.user.name || "User"}
                       className="w-8 h-8 rounded-full border-2 border-cyan-400"
                     />
                   ) : (
-                    <div className="w-8 h-8 rounded-full bg-linear-to-r from-cyan-500 to-blue-600 flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-500 to-[#9C74FF] flex items-center justify-center">
                       <User className="w-5 h-5 text-white" />
                     </div>
                   )}
@@ -162,7 +246,7 @@ export default function Navbar() {
                         {session.user.email}
                       </p>
                       {session.user.role === "admin" && (
-                        <span className="inline-block mt-1 px-2 py-0.5 bg-linear-to-r from-purple-500 to-pink-500 text-white text-xs font-bold rounded-full">
+                        <span className="inline-block mt-1 px-2 py-0.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-bold rounded-full">
                           Admin
                         </span>
                       )}
@@ -222,13 +306,13 @@ export default function Navbar() {
               <>
                 <Link
                   href="/sign-in"
-                  className="px-6 py-2.5 text-gray-700 hover:text-blue-600 font-bold transition-colors"
+                  className="px-6 py-2.5 text-gray-700 hover:text-[#9C74FF] font-bold transition-colors"
                 >
                   Login
                 </Link>
                 <Link
                   href="/sign-up"
-                  className="px-6 py-2.5 bg-[#9C74FF] text-white rounded-xl font-bold hover:from-cyan-600 hover:to-blue-700 transition-all shadow-lg"
+                  className="px-6 py-2.5 bg-[#9C74FF] text-white rounded-xl font-bold hover:bg-[#8B5FE8] transition-all shadow-lg"
                 >
                   Sign Up Free
                 </Link>
@@ -249,44 +333,92 @@ export default function Navbar() {
         {mobileMenuOpen && (
           <div className="lg:hidden py-4 border-t border-gray-200">
             <div className="flex flex-col gap-4">
-              {navLinks.map((link) => (
-                <div key={link.name}>
-                  {link.available ? (
-                    <Link
-                      href={link.href}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center gap-2 text-gray-700 hover:text-blue-600 font-bold transition-colors py-2"
-                    >
-                      {link.icon && <link.icon className="w-5 h-5" />}
-                      <span>{link.name}</span>
-                    </Link>
-                  ) : (
-                    <div className="py-2">
-                      <div className="flex items-center gap-2 text-gray-400 font-bold mb-2">
-                        {link.icon && <link.icon className="w-5 h-5" />}
-                        <span>{link.name}</span>
-                      </div>
-                      <div className="ml-7 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Clock className="w-4 h-4 text-yellow-600" />
-                          <span className="text-sm font-bold text-yellow-800">
-                            Coming Soon
-                          </span>
+              {/* Home */}
+              <Link
+                href="/"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-2 text-gray-700 hover:text-[#9C74FF] font-bold transition-colors py-2"
+              >
+                <LucideHome className="w-5 h-5" />
+                <span>Home</span>
+              </Link>
+
+              {/* Practice Tests Section */}
+              <div className="border-t border-gray-200 pt-4">
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3 px-2">
+                  Practice Tests
+                </p>
+                {practiceTests.map((test) => (
+                  <div key={test.name}>
+                    {test.available ? (
+                      <Link
+                        href={test.href}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="flex items-center gap-3 py-2 px-2 hover:bg-purple-50 rounded-lg transition-colors"
+                      >
+                        <div
+                          className={`p-2 bg-gradient-to-br ${test.color} rounded-lg`}
+                        >
+                          <test.icon className="w-5 h-5 text-white" />
                         </div>
-                        <p className="text-xs text-yellow-700">
-                          Expected launch: Q1 2025
-                        </p>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <p className="font-bold text-gray-900">
+                              {test.name}
+                            </p>
+                            <CheckCircle className="w-4 h-4 text-green-500" />
+                          </div>
+                          <p className="text-xs text-gray-600">
+                            {test.description}
+                          </p>
+                        </div>
+                      </Link>
+                    ) : (
+                      <div className="flex items-center gap-3 py-2 px-2 opacity-60">
+                        <div
+                          className={`p-2 bg-gradient-to-br ${test.color} rounded-lg opacity-50`}
+                        >
+                          <test.icon className="w-5 h-5 text-white" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <p className="font-bold text-gray-500">
+                              {test.name}
+                            </p>
+                            <div className="flex items-center gap-1 px-2 py-0.5 bg-yellow-100 rounded-full">
+                              <Clock className="w-3 h-3 text-yellow-600" />
+                              <span className="text-xs font-bold text-yellow-700">
+                                Coming Soon
+                              </span>
+                            </div>
+                          </div>
+                          <p className="text-xs text-gray-500">
+                            {test.description}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </div>
-              ))}
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Blog */}
+              <div className="border-t border-gray-200 pt-4">
+                <Link
+                  href="/blog"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-2 text-gray-700 hover:text-[#9C74FF] font-bold transition-colors py-2"
+                >
+                  <BookMarked className="w-5 h-5" />
+                  <span>Blog</span>
+                </Link>
+              </div>
 
               {/* Mobile Auth Section */}
               <div className="flex flex-col gap-2 pt-4 border-t border-gray-200">
                 {status === "loading" ? (
                   <div className="flex justify-center py-4">
-                    <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                    <div className="w-8 h-8 border-2 border-[#9C74FF] border-t-transparent rounded-full animate-spin"></div>
                   </div>
                 ) : session ? (
                   <>
@@ -295,11 +427,11 @@ export default function Navbar() {
                         {session.user.image ? (
                           <img
                             src={session.user.image}
-                            // alt={session.user.name}
+                            alt={session.user.name || "User"}
                             className="w-10 h-10 rounded-full border-2 border-cyan-400"
                           />
                         ) : (
-                          <div className="w-10 h-10 rounded-full bg-linear-to-r from-cyan-500 to-blue-600 flex items-center justify-center">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-r from-cyan-500 to-[#9C74FF] flex items-center justify-center">
                             <User className="w-6 h-6 text-white" />
                           </div>
                         )}
@@ -313,7 +445,7 @@ export default function Navbar() {
                         </div>
                       </div>
                       {session.user.role === "admin" && (
-                        <span className="inline-block px-2 py-0.5 bg-linear-to-r from-purple-500 to-pink-500 text-white text-xs font-bold rounded-full">
+                        <span className="inline-block px-2 py-0.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-bold rounded-full">
                           Admin
                         </span>
                       )}
@@ -377,7 +509,7 @@ export default function Navbar() {
                     <Link
                       href="/sign-up"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="px-6 py-2.5 text-center bg-linear-to-r from-cyan-500 to-blue-600 text-white rounded-xl font-bold shadow-lg"
+                      className="px-6 py-2.5 text-center bg-gradient-to-r from-cyan-500 to-[#9C74FF] text-white rounded-xl font-bold shadow-lg"
                     >
                       Sign Up Free
                     </Link>
