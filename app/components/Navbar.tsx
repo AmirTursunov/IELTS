@@ -63,7 +63,7 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="bg-linear-to-r from-cyan-500 to-blue-600 px-5 py-2.5 rounded-xl font-black text-2xl text-white shadow-lg group-hover:scale-105 transition-transform">
+            <div className="bg-[#9C74FF] px-5 py-2.5 rounded-xl font-black text-2xl text-white shadow-lg group-hover:scale-105 transition-transform">
               IELTS
             </div>
             <span className="text-xl font-black text-gray-800 hidden md:block">
@@ -228,7 +228,7 @@ export default function Navbar() {
                 </Link>
                 <Link
                   href="/sign-up"
-                  className="px-6 py-2.5 bg-linear-to-r from-cyan-500 to-blue-600 text-white rounded-xl font-bold hover:from-cyan-600 hover:to-blue-700 transition-all shadow-lg"
+                  className="px-6 py-2.5 bg-[#9C74FF] text-white rounded-xl font-bold hover:from-cyan-600 hover:to-blue-700 transition-all shadow-lg"
                 >
                   Sign Up Free
                 </Link>
