@@ -64,51 +64,33 @@ export const authOptions: NextAuthOptions = {
   ],
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: 30 * 24 * 60 * 60,
   },
-  cookies: {
-    sessionToken: {
-      name:
-        process.env.NODE_ENV === "production"
-          ? "__Secure-next-auth.session-token"
-          : "next-auth.session-token",
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: process.env.NODE_ENV === "production",
-      },
-    },
-  },
+  secret: process.env.NEXTAUTH_SECRET,
   pages: {
     signIn: "/sign-in",
-    signOut: "/sign-in",
     error: "/sign-in",
   },
   callbacks: {
-    async signIn({ user, account, profile }) {
+    async signIn({ user, account }) {
       try {
-        // Faqat Google OAuth uchun
         if (account?.provider === "google") {
           await connectDB();
 
           const existingUser = await User.findOne({ email: user.email });
 
           if (!existingUser) {
-            // Yangi Google user yaratish
             const newUser = await User.create({
               name: user.name,
               email: user.email,
               avatar: user.image,
-              password: Math.random().toString(36).slice(-8), // Random password
+              password: Math.random().toString(36).slice(-8),
               isVerified: true,
               role: "user",
             });
 
-            // User ID ni token uchun saqlab qolamiz
             user.id = newUser._id.toString();
           } else {
-            // Mavjud user ID ni saqlab qolamiz
             user.id = existingUser._id.toString();
           }
         }
@@ -118,14 +100,12 @@ export const authOptions: NextAuthOptions = {
         return false;
       }
     },
-    async jwt({ token, user, account, trigger }) {
-      // Birinchi marta sign in bo'lganda
+    async jwt({ token, user, account }) {
       if (user) {
         token.id = user.id;
         token.role = (user as any).role || "user";
       }
 
-      // Agar Google orqali sign in bo'lsa va token'da id yo'q bo'lsa
       if (account?.provider === "google" && !token.id) {
         try {
           await connectDB();
@@ -148,8 +128,16 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
+    async redirect({ url, baseUrl }) {
+      // Agar URL internal bo'lsa
+      if (url.startsWith("/")) return `${baseUrl}${url}`;
+      // Agar URL baseUrl bilan boshlanayotgan bo'lsa
+      if (url.startsWith(baseUrl)) return url;
+      // Default: home page
+      return baseUrl;
+    },
   },
-  debug: process.env.NODE_ENV === "development", // Debug mode
+  debug: process.env.NODE_ENV === "development",
 };
 
 const handler = NextAuth(authOptions);

@@ -8,7 +8,20 @@ export default function UseDemoButton() {
   return (
     <>
       <button
-        className="px-8 py-4 bg-[#55BE9D] text-white rounded-xl font-bold text-lg hover:bg-[#48A88A] transition-all shadow-xl"
+        className="
+  bg-[#00C853]
+  hover:bg-[#00B44A]
+  text-black
+  px-9 py-4
+  rounded-xl
+  font-black
+  text-lg
+  shadow-[0_14px_35px_rgba(0,200,83,0.45)]
+  transition-all
+  duration-300
+  hover:-translate-y-0.5
+  hover:shadow-[0_20px_45px_rgba(0,200,83,0.6)]
+"
         onClick={() => setIsModalOpen(true)}
       >
         Use Demo

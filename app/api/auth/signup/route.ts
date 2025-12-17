@@ -5,7 +5,6 @@ import { User } from "@/models/User";
 
 export async function POST(request: NextRequest) {
   try {
-    // Request body'ni parse qilish
     const body = await request.json();
     const { name, email, password } = body;
 
@@ -17,7 +16,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Name validatsiya
     if (name.trim().length < 2) {
       return NextResponse.json(
         { success: false, error: "Name must be at least 2 characters" },
@@ -25,7 +23,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Email validatsiya
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return NextResponse.json(
@@ -34,7 +31,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Password validatsiya
     if (password.length < 6) {
       return NextResponse.json(
         { success: false, error: "Password must be at least 6 characters" },
@@ -42,10 +38,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Database'ga ulanish
     await connectDB();
 
-    // Mavjud user tekshirish
     const existingUser = await User.findOne({ email: email.toLowerCase() });
     if (existingUser) {
       return NextResponse.json(
@@ -54,16 +48,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Yangi user yaratish
     const user = await User.create({
       name: name.trim(),
       email: email.toLowerCase(),
-      password, // Model'da pre-save hook hash qiladi
+      password,
       role: "user",
       isVerified: false,
     });
 
-    // Success response
     return NextResponse.json(
       {
         success: true,
@@ -79,7 +71,6 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error("Signup error:", error);
 
-    // Mongoose validation errors
     if (error.name === "ValidationError") {
       const messages = Object.values(error.errors).map(
         (err: any) => err.message
@@ -90,7 +81,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Mongoose duplicate key error
     if (error.code === 11000) {
       return NextResponse.json(
         { success: false, error: "User with this email already exists" },
@@ -98,7 +88,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generic error
     return NextResponse.json(
       { success: false, error: "Failed to create account. Please try again." },
       { status: 500 }

@@ -71,7 +71,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-[#2A2A2A] text-white">
+      <section className="relative overflow-hidden bg-[#F8CB47] text-white">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-0 right-0 w-96 h-96 bg-[#9C74FF] rounded-full -mr-48 -mt-48"></div>
           <div className="absolute bottom-0 left-0 w-72 h-72 bg-[#55BE9D] rounded-full -ml-36 -mb-36"></div>
@@ -81,18 +81,18 @@ export default function HomePage() {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
               <div className="inline-flex items-center gap-2 bg-[#9C74FF] px-5 py-2.5 rounded-full mb-6 shadow-lg">
-                <Star className="w-4 h-4 fill-[#F8CB47] text-[#F8CB47]" />
-                <span className="text-sm font-bold">
+                <Star className="w-4 h-4 fill-white text-white" />
+                <span className="text-sm font-bold text-white">
                   Rated 4.9/5 by 2000+ students
                 </span>
               </div>
 
               <h1 className="text-5xl lg:text-6xl font-black mb-6 leading-tight">
                 Achieve Your Dream
-                <span className="block text-[#F8CB47] mt-2">IELTS Score</span>
+                <span className="block text-white mt-2">IELTS Score</span>
               </h1>
 
-              <p className="text-xl text-gray-300 mb-8 leading-relaxed">
+              <p className="text-xl text-white mb-8 leading-relaxed">
                 Join 2,500+ successful students who achieved their target IELTS
                 band score with our proven preparation methods and expert
                 guidance.
@@ -104,8 +104,8 @@ export default function HomePage() {
             </div>
 
             <div className="relative">
-              <div className="relative bg-white/5 backdrop-blur-sm rounded-2xl p-8 border-2 border-[#9C74FF]/30 shadow-2xl">
-                <div className="absolute -top-4 -right-4 bg-[#F8CB47] text-[#2A2A2A] px-6 py-3 rounded-full font-black shadow-lg">
+              <div className="relative bg-white/5 backdrop-blur-sm rounded-2xl p-8 border-2 border-white/30 shadow-2xl">
+                <div className="absolute -top-6 -right-4 bg-white text-[#2A2A2A] px-6 py-3 rounded-full font-black shadow-lg">
                   🔥 2,500+ Active Students
                 </div>
 
@@ -122,7 +122,7 @@ export default function HomePage() {
                     </div>
                     <div>
                       <div className="text-2xl font-black text-[#FFA500]">
-                        40+
+                        50+
                       </div>
                       <div className="text-sm text-gray-600 font-semibold">
                         Upcoming Tests

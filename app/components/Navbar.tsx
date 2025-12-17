@@ -139,10 +139,10 @@ export default function Navbar() {
                         <Link
                           href={test.href}
                           onClick={() => setShowPracticeMenu(false)}
-                          className="flex items-start gap-3 px-4 py-3 hover:bg-gradient-to-r hover:from-purple-50 hover:to-blue-50 transition-all group"
+                          className="flex items-start gap-3 px-4 py-3 hover:bg-linear-to-r hover:from-purple-50 hover:to-blue-50 transition-all group"
                         >
                           <div
-                            className={`p-2.5 bg-gradient-to-br ${test.color} rounded-xl group-hover:scale-110 transition-transform shadow-md`}
+                            className={`p-2.5 bg-linear-to-br ${test.color} rounded-xl group-hover:scale-110 transition-transform shadow-md`}
                           >
                             <test.icon className="w-5 h-5 text-white" />
                           </div>
@@ -162,7 +162,7 @@ export default function Navbar() {
                         <div className="px-4 py-3 opacity-60 cursor-not-allowed hover:bg-gray-50 transition-colors">
                           <div className="flex items-start gap-3">
                             <div
-                              className={`p-2.5 bg-gradient-to-br ${test.color} rounded-xl opacity-50`}
+                              className={`p-2.5 bg-linear-to-br ${test.color} rounded-xl opacity-50`}
                             >
                               <test.icon className="w-5 h-5 text-white" />
                             </div>
@@ -189,7 +189,7 @@ export default function Navbar() {
                   ))}
 
                   {/* Footer Info */}
-                  <div className="px-4 py-3 mt-2 border-t border-gray-100 bg-gradient-to-r from-blue-50 to-purple-50 rounded-b-2xl">
+                  <div className="px-4 py-3 mt-2 border-t border-gray-100 bg-linear-to-r from-blue-50 to-purple-50 rounded-b-2xl">
                     <div className="flex items-center gap-2 text-xs text-gray-700">
                       <Sparkles className="w-4 h-4 text-[#9C74FF]" />
                       <span className="font-semibold">
@@ -228,7 +228,7 @@ export default function Navbar() {
                       className="w-8 h-8 rounded-full border-2 border-cyan-400"
                     />
                   ) : (
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-r from-cyan-500 to-[#9C74FF] flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-full bg-linear-to-r from-cyan-500 to-[#9C74FF] flex items-center justify-center">
                       <User className="w-5 h-5 text-white" />
                     </div>
                   )}
@@ -246,7 +246,7 @@ export default function Navbar() {
                         {session.user.email}
                       </p>
                       {session.user.role === "admin" && (
-                        <span className="inline-block mt-1 px-2 py-0.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-bold rounded-full">
+                        <span className="inline-block mt-1 px-2 py-0.5 bg-linear-to-r from-purple-500 to-pink-500 text-white text-xs font-bold rounded-full">
                           Admin
                         </span>
                       )}
@@ -357,7 +357,7 @@ export default function Navbar() {
                         className="flex items-center gap-3 py-2 px-2 hover:bg-purple-50 rounded-lg transition-colors"
                       >
                         <div
-                          className={`p-2 bg-gradient-to-br ${test.color} rounded-lg`}
+                          className={`p-2 bg-linear-to-br ${test.color} rounded-lg`}
                         >
                           <test.icon className="w-5 h-5 text-white" />
                         </div>
@@ -376,7 +376,7 @@ export default function Navbar() {
                     ) : (
                       <div className="flex items-center gap-3 py-2 px-2 opacity-60">
                         <div
-                          className={`p-2 bg-gradient-to-br ${test.color} rounded-lg opacity-50`}
+                          className={`p-2 bg-linear-to-br ${test.color} rounded-lg opacity-50`}
                         >
                           <test.icon className="w-5 h-5 text-white" />
                         </div>
@@ -431,7 +431,7 @@ export default function Navbar() {
                             className="w-10 h-10 rounded-full border-2 border-cyan-400"
                           />
                         ) : (
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-r from-cyan-500 to-[#9C74FF] flex items-center justify-center">
+                          <div className="w-10 h-10 rounded-full bg-linear-to-r from-cyan-500 to-[#9C74FF] flex items-center justify-center">
                             <User className="w-6 h-6 text-white" />
                           </div>
                         )}
@@ -445,7 +445,7 @@ export default function Navbar() {
                         </div>
                       </div>
                       {session.user.role === "admin" && (
-                        <span className="inline-block px-2 py-0.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs font-bold rounded-full">
+                        <span className="inline-block px-2 py-0.5 bg-linear-to-r from-purple-500 to-pink-500 text-white text-xs font-bold rounded-full">
                           Admin
                         </span>
                       )}
@@ -509,7 +509,7 @@ export default function Navbar() {
                     <Link
                       href="/sign-up"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="px-6 py-2.5 text-center bg-gradient-to-r from-cyan-500 to-[#9C74FF] text-white rounded-xl font-bold shadow-lg"
+                      className="px-6 py-2.5 text-center bg-linear-to-r from-cyan-500 to-[#9C74FF] text-white rounded-xl font-bold shadow-lg"
                     >
                       Sign Up Free
                     </Link>
