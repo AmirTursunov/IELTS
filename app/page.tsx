@@ -1,5 +1,15 @@
 import Link from "next/link";
-import { Award, ArrowRight, Star, Calendar } from "lucide-react";
+import {
+  Award,
+  ArrowRight,
+  Star,
+  Calendar,
+  BookOpen,
+  Target,
+  Clock,
+  Trophy,
+  Users,
+} from "lucide-react";
 import UseDemoButton from "./components/useDemoBtn";
 
 export default function HomePage() {
@@ -12,25 +22,25 @@ export default function HomePage() {
 
   const features = [
     {
-      icon: "📚",
+      icon: <BookOpen className="w-6 h-6 text-white" />,
       title: "Complete IELTS Modules",
       desc: "Practice all 4 skills: Listening, Reading, Writing, Speaking",
       color: "bg-[#9C74FF]",
     },
     {
-      icon: "🎯",
+      icon: <Target className="w-6 h-6 text-white" />,
       title: "Real Test Experience",
       desc: "Practice with authentic IELTS format tests and get instant results",
       color: "bg-[#55BE9D]",
     },
     {
-      icon: "⏰",
+      icon: <Clock className="w-6 h-6 text-white" />,
       title: "Flexible Learning",
       desc: "Study at your own pace with 24/7 access to materials",
       color: "bg-[#F8CB47]",
     },
     {
-      icon: "🏆",
+      icon: <Trophy className="w-6 h-6 text-white" />,
       title: "Expert Guidance",
       desc: "Learn from certified IELTS instructors with proven track records",
       color: "bg-[#9C74FF]",
@@ -102,34 +112,52 @@ export default function HomePage() {
                 <UseDemoButton />
               </div>
             </div>
-
-            <div className="relative">
-              <div className="relative bg-white/5 backdrop-blur-sm rounded-2xl p-8 border-2 border-white/30 shadow-2xl">
-                <div className="absolute -top-6 -right-4 bg-white text-[#2A2A2A] px-6 py-3 rounded-full font-black shadow-lg">
+            <div className="relative group">
+              <div className="relative bg-white/5 backdrop-blur-sm rounded-2xl p-8 border-2 border-[#9C74FF]/30 shadow-2xl transition-all duration-500 hover:border-[#9C74FF] hover:shadow-[#9C74FF]/50">
+                {/* Top Badge */}
+                <div className="absolute -top-6 -right-4 bg-white text-[#2A2A2A] px-6 py-3 rounded-full font-black shadow-lg transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 animate-float">
                   🔥 2,500+ Active Students
                 </div>
 
-                <img
-                  src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800"
-                  alt="Students studying"
-                  className="rounded-xl shadow-2xl"
-                />
+                {/* Image Container */}
+                <div className="relative overflow-hidden rounded-xl">
+                  {/* Hover Overlay */}
+                  <div className="absolute inset-0 bg-linear-to-tr from-[#9C74FF]/20 via-transparent to-[#55BE9D]/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10 rounded-xl" />
 
-                <div className="absolute -bottom-6 -left-6 bg-white text-[#2A2A2A] px-6 py-4 rounded-xl shadow-2xl">
+                  {/* Shine Effect */}
+                  <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-linear-to-r from-transparent via-white/30 to-transparent z-20" />
+
+                  {/* Image */}
+                  <img
+                    src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800"
+                    alt="Students studying"
+                    className="rounded-xl shadow-2xl w-full transform group-hover:scale-110 transition-all duration-700 ease-out"
+                  />
+
+                  {/* Sparkles */}
+                  <div className="absolute top-4 right-4 w-4 h-4 bg-[#F8CB47] rounded-full opacity-0 group-hover:opacity-100 group-hover:animate-ping transition-opacity duration-300" />
+                  <div className="absolute bottom-4 left-4 w-3 h-3 bg-[#55BE9D] rounded-full opacity-0 group-hover:opacity-100 group-hover:animate-ping transition-opacity duration-300 [animation-delay:150ms]" />
+                </div>
+
+                {/* Bottom Badge */}
+                <div className="absolute -bottom-6 -left-6 bg-white text-[#2A2A2A] px-6 py-4 rounded-xl shadow-2xl transform group-hover:scale-110 group-hover:-rotate-2 transition-all duration-300 glow-pulse">
                   <div className="flex items-center gap-3">
-                    <div className="bg-[#FFA500]/20 p-3 rounded-lg">
-                      <Calendar className="w-6 h-6 text-[#FFA500]" />
+                    <div className="bg-[#9C74FF]/20 p-3 rounded-lg group-hover:rotate-12 transition-transform duration-300">
+                      <Users className="w-6 h-6 text-[#9C74FF]" />
                     </div>
                     <div>
-                      <div className="text-2xl font-black text-[#FFA500]">
-                        50+
+                      <div className="text-2xl font-black text-[#9C74FF]">
+                        2,500+
                       </div>
                       <div className="text-sm text-gray-600 font-semibold">
-                        Upcoming Tests
+                        Active Learners
                       </div>
                     </div>
                   </div>
                 </div>
+
+                {/* Glow Effect */}
+                <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl bg-linear-to-r from-[#9C74FF]/30 via-[#F8CB47]/30 to-[#55BE9D]/30 -z-10" />
               </div>
             </div>
           </div>
@@ -137,7 +165,7 @@ export default function HomePage() {
       </section>
 
       {/* Stats Section */}
-      <section className="py-12 bg-gray-50 border-b-2 border-gray-100">
+      <section className="py-12 bg-[#F8CB47] border-b-2 border-[#2A2A2A]/10">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
             {stats.map((stat, idx) => (
@@ -152,7 +180,7 @@ export default function HomePage() {
                       : idx === 1
                       ? "bg-[#55BE9D]"
                       : idx === 2
-                      ? "bg-[#F8CB47]"
+                      ? "bg-white"
                       : "bg-[#9C74FF]"
                   } rounded-2xl mb-4 shadow-lg text-3xl`}
                 >
@@ -161,7 +189,7 @@ export default function HomePage() {
                 <div className="text-4xl font-black text-[#2A2A2A] mb-2">
                   {stat.value}
                 </div>
-                <div className="text-gray-600 font-bold">{stat.label}</div>
+                <div className="text-[#2A2A2A] font-bold">{stat.label}</div>
               </div>
             ))}
           </div>
@@ -169,16 +197,16 @@ export default function HomePage() {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-[#F8CB47]">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
-            <div className="inline-block bg-[#9C74FF]/10 text-[#9C74FF] px-5 py-2.5 rounded-full font-bold mb-4 border-2 border-[#9C74FF]/20">
+            <div className="inline-block bg-white text-[#9C74FF] px-5 py-2.5 rounded-full font-bold mb-4 border-2 border-white shadow-lg">
               Why Choose Us
             </div>
             <h2 className="text-4xl lg:text-5xl font-black text-[#2A2A2A] mb-4">
               Everything You Need to Succeed
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="text-xl text-[#2A2A2A] max-w-3xl mx-auto">
               Comprehensive IELTS preparation with real exam experience
             </p>
           </div>
@@ -187,7 +215,7 @@ export default function HomePage() {
             {features.map((feature, idx) => (
               <div
                 key={idx}
-                className="bg-white rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-all border-2 border-gray-100 group hover:-translate-y-2"
+                className="bg-white rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-all border-2 border-white group hover:-translate-y-2"
               >
                 <div
                   className={`inline-flex items-center justify-center w-16 h-16 ${feature.color} rounded-2xl mb-6 group-hover:scale-110 transition-transform shadow-lg text-3xl`}
@@ -205,16 +233,16 @@ export default function HomePage() {
       </section>
 
       {/* Study Paths Section */}
-      <section className="py-20 bg-gray-50">
+      <section className="py-20 bg-[#F8CB47]">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
-            <div className="inline-block bg-[#F8CB47]/20 text-[#2A2A2A] px-5 py-2.5 rounded-full font-bold mb-4 border-2 border-[#F8CB47]/30">
+            <div className="inline-block bg-white text-[#2A2A2A] px-5 py-2.5 rounded-full font-bold mb-4 border-2 border-white shadow-lg">
               Learning Paths
             </div>
             <h2 className="text-4xl lg:text-5xl font-black text-[#2A2A2A] mb-4">
               Choose Your IELTS Module
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="text-xl text-[#2A2A2A] max-w-3xl mx-auto">
               Start practicing with our comprehensive test modules
             </p>
           </div>
@@ -441,16 +469,16 @@ export default function HomePage() {
       </section>
 
       {/* Testimonials */}
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-[#F8CB47]">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
-            <div className="inline-block bg-[#55BE9D]/10 text-[#55BE9D] px-5 py-2.5 rounded-full font-bold mb-4 border-2 border-[#55BE9D]/20">
+            <div className="inline-block bg-white text-[#55BE9D] px-5 py-2.5 rounded-full font-bold mb-4 border-2 border-white shadow-lg">
               Student Reviews
             </div>
             <h2 className="text-4xl lg:text-5xl font-black text-[#2A2A2A] mb-4">
               What Our Students Say
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="text-xl text-[#2A2A2A] max-w-3xl mx-auto">
               Join thousands of satisfied students who achieved their goals
             </p>
           </div>
@@ -459,7 +487,7 @@ export default function HomePage() {
             {testimonials.map((testimonial, idx) => (
               <div
                 key={idx}
-                className="bg-gray-50 rounded-2xl p-8 shadow-xl border-2 border-gray-100 hover:shadow-2xl transition-all"
+                className="bg-white rounded-2xl p-8 shadow-xl border-2 border-white hover:shadow-2xl transition-all"
               >
                 <div className="flex mb-4">
                   {[...Array(5)].map((_, i) => (
@@ -499,7 +527,7 @@ export default function HomePage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-[#9C74FF] text-white">
+      {/* <section className="py-20 bg-[#9C74FF] text-white">
         <div className="max-w-4xl mx-auto px-6 text-center">
           <h2 className="text-4xl lg:text-5xl font-black mb-6">
             Ready to Start Your IELTS Journey?
@@ -521,7 +549,7 @@ export default function HomePage() {
             </button>
           </div>
         </div>
-      </section>
+      </section> */}
     </div>
   );
 }

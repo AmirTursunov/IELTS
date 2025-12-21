@@ -136,7 +136,7 @@ export default function Footer() {
         </div>
 
         {/* Newsletter */}
-        <div className="mt-12 pt-12 border-t border-gray-700">
+        {/* <div className="mt-12 pt-12 border-t border-gray-700">
           <div className="max-w-2xl mx-auto text-center">
             <h3 className="text-2xl font-black mb-4">
               Subscribe to Our Newsletter
@@ -156,7 +156,7 @@ export default function Footer() {
               </button>
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
 
       {/* Bottom Footer */}
