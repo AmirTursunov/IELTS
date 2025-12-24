@@ -13,7 +13,7 @@ export function ProtectedRoute({
   children,
   requireAdmin = false,
 }: ProtectedRouteProps) {
-  const { user, loading, isAuthenticated, isAdmin } = useAuth();
+  const { loading, isAuthenticated, isAdmin } = useAuth();
   const router = useRouter();
 
   useEffect(() => {

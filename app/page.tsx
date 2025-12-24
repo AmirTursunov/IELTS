@@ -197,35 +197,38 @@ export default function HomePage() {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 bg-[#F8CB47]">
-        <div className="max-w-7xl mx-auto px-6">
+      <section className="py-20 bg-[#2A2A2A] text-white relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-96 h-96 bg-[#9C74FF]/20 rounded-full -ml-48 -mt-48"></div>
+        <div className="absolute bottom-0 right-0 w-72 h-72 bg-[#55BE9D]/20 rounded-full -mr-36 -mb-36"></div>
+
+        <div className="relative max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
-            <div className="inline-block bg-white text-[#9C74FF] px-5 py-2.5 rounded-full font-bold mb-4 border-2 border-white shadow-lg">
+            <div className="inline-block bg-[#F8CB47] text-[#2A2A2A] px-5 py-2.5 rounded-full font-bold mb-4 shadow-lg">
               Why Choose Us
             </div>
-            <h2 className="text-4xl lg:text-5xl font-black text-[#2A2A2A] mb-4">
+            <h2 className="text-4xl lg:text-5xl font-black mb-4">
               Everything You Need to Succeed
             </h2>
-            <p className="text-xl text-[#2A2A2A] max-w-3xl mx-auto">
+            <p className="text-xl text-gray-300 max-w-3xl mx-auto">
               Comprehensive IELTS preparation with real exam experience
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {features.map((feature, idx) => (
               <div
                 key={idx}
-                className="bg-white rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-all border-2 border-white group hover:-translate-y-2"
+                className="bg-white/5 backdrop-blur-sm rounded-2xl p-8 border-2 border-[#9C74FF]/30 shadow-lg hover:shadow-xl hover:bg-white/10 transition-all hover:-translate-y-2"
               >
                 <div
                   className={`inline-flex items-center justify-center w-16 h-16 ${feature.color} rounded-2xl mb-6 group-hover:scale-110 transition-transform shadow-lg text-3xl`}
                 >
                   {feature.icon}
                 </div>
-                <h3 className="text-xl font-black text-[#2A2A2A] mb-3">
+                <h3 className="text-xl font-black text-white mb-3">
                   {feature.title}
                 </h3>
-                <p className="text-gray-600 leading-relaxed">{feature.desc}</p>
+                <p className="text-gray-300 leading-relaxed">{feature.desc}</p>
               </div>
             ))}
           </div>

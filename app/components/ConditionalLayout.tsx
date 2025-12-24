@@ -16,6 +16,8 @@ export default function ConditionalLayout({
   const hideLayoutPaths = [
     "/sign-in",
     "/sign-up",
+    "/forgot-password",
+    "/reset-password",
     "/listening/", // /listening/[id] uchun
     "/reading/", // /reading/[id] uchun (kelajakda)
     "/writing/", // /writing/[id] uchun (kelajakda)

@@ -49,8 +49,10 @@ export default function Footer() {
   ];
 
   return (
-    <footer className="bg-linear-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
+    <footer className="bg-[#2A2A2A] text-white relative overflow-hidden">
       {/* Main Footer */}
+      <div className="absolute top-0 left-0 w-96 h-96 bg-[#9C74FF]/20 rounded-full -ml-48 -mt-48"></div>
+      <div className="absolute bottom-0 right-0 w-72 h-72 bg-[#55BE9D]/20 rounded-full -mr-36 -mb-36"></div>
       <div className="max-w-7xl mx-auto px-6 py-16">
         <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-12">
           {/* Brand */}
@@ -91,7 +93,7 @@ export default function Footer() {
                 <li key={link.name}>
                   <Link
                     href={link.href}
-                    className="text-gray-400 hover:text-cyan-400 transition-colors font-semibold"
+                    className="text-gray-400 hover:text-[#9C74FF] transition-colors font-semibold"
                   >
                     {link.name}
                   </Link>
@@ -108,7 +110,7 @@ export default function Footer() {
                 <li key={link.name}>
                   <Link
                     href={link.href}
-                    className="text-gray-400 hover:text-cyan-400 transition-colors font-semibold"
+                    className="text-gray-400 hover:text-[#9C74FF] transition-colors font-semibold"
                   >
                     {link.name}
                   </Link>
@@ -125,7 +127,7 @@ export default function Footer() {
                 <li key={link.name}>
                   <Link
                     href={link.href}
-                    className="text-gray-400 hover:text-cyan-400 transition-colors font-semibold"
+                    className="text-gray-400 hover:text-[#9C74FF]  transition-colors font-semibold"
                   >
                     {link.name}
                   </Link>
@@ -174,7 +176,7 @@ export default function Footer() {
                 <a
                   key={social.name}
                   href={social.href}
-                  className={`p-2 bg-gray-800 rounded-lg ${social.color} transition-all hover:scale-110`}
+                  className={`p-2 bg-[#9C74FF] rounded-lg ${social.color} transition-all hover:scale-110`}
                   aria-label={social.name}
                 >
                   <social.icon className="w-5 h-5" />
@@ -186,13 +188,13 @@ export default function Footer() {
             <div className="flex items-center gap-6 text-sm">
               <Link
                 href="/privacy"
-                className="text-gray-400 hover:text-cyan-400 transition-colors font-semibold"
+                className="text-gray-400 hover:text-[#9C74FF] transition-colors font-semibold"
               >
                 Privacy Policy
               </Link>
               <Link
                 href="/terms"
-                className="text-gray-400 hover:text-cyan-400 transition-colors font-semibold"
+                className="text-gray-400 hover:text-[#9C74FF]  transition-colors font-semibold"
               >
                 Terms of Service
               </Link>
