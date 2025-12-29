@@ -1,4 +1,3 @@
-// app/listening/[id]/page.tsx
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
@@ -287,16 +286,83 @@ export default function ListeningTestPage() {
     if (correct >= 16) return 5.0;
     if (correct >= 13) return 4.5;
     if (correct >= 10) return 4.0;
-    return 3.5;
+    if (correct >= 7) return 3.5;
+    if (correct >= 5) return 3.0;
+    if (correct >= 3) return 2.5;
+    if (correct >= 1) return 2.0;
+    return 1.0; // 0 ta correct
   };
 
-  const handleSubmit = () => {
-    const result = calculateResult();
-    setResult(result);
-    setShowResult(true);
+  const handleSubmit = async () => {
+    // console.log("🚀 Listening test submit clicked!");
+    // console.log("📊 Current answers:", answers);
+    // console.log("🆔 Test ID:", testId);
+
+    // Prepare data for backend
+    const submitData = {
+      testId: testId,
+      testType: "listening",
+      answers: Object.entries(answers).map(([questionNumber, userAnswer]) => ({
+        questionNumber: parseInt(questionNumber),
+        userAnswer: userAnswer,
+      })),
+      timeSpent: test!.timeLimit * 60 - timeRemaining,
+    };
+
+    // console.log("📦 Data to submit:", JSON.stringify(submitData, null, 2));
+
+    try {
+      // console.log("🔄 Sending request to /api/submit-test...");
+
+      const response = await fetch("/api/submit-test", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(submitData),
+      });
+
+      // console.log("📡 Response status:", response.status);
+
+      const responseData = await response.json();
+      // console.log("✅ Response data:", responseData);
+
+      if (responseData.success) {
+        // console.log("🎉 Test submitted successfully!");
+        // console.log("📊 Band Score:", responseData.data.bandScore);
+
+        // Calculate local result for display
+        const localResult = calculateResult();
+
+        // Merge with backend data
+        setResult({
+          ...localResult,
+          band: responseData.data.bandScore,
+          correct: responseData.data.correctAnswers,
+          total: responseData.data.totalQuestions,
+        });
+        setShowResult(true);
+      } else {
+        console.error("❌ Submission failed:", responseData.error);
+        alert("Failed to submit test: " + responseData.error);
+
+        // Fallback to local result
+        const localResult = calculateResult();
+        setResult(localResult);
+        setShowResult(true);
+      }
+    } catch (error) {
+      console.error("❌ Network error:", error);
+      alert("Network error occurred. Showing local results only.");
+
+      // Fallback to local result
+      const localResult = calculateResult();
+      setResult(localResult);
+      setShowResult(true);
+    }
+
     setShowSubmitModal(false);
   };
-
   const goToNextPart = () => {
     if (currentPart < test!.sections.length - 1) {
       setIsPlaying(false);
@@ -882,17 +948,6 @@ export default function ListeningTestPage() {
 
                               <div className="flex-1">
                                 {/* DEBUG: Log question data */}
-                                {(() => {
-                                  console.log("🔍 Question Debug:", {
-                                    questionNumber: question.questionNumber,
-                                    questionType: question.questionType,
-                                    hasImageUrl: !!question.imageUrl,
-                                    imageUrl: question.imageUrl,
-                                    imageUrlType: typeof question.imageUrl,
-                                    imageUrlLength: question.imageUrl?.length,
-                                  });
-                                  return null;
-                                })()}
 
                                 <p className="text-gray-800 mb-4 leading-relaxed">
                                   {question.question}
@@ -955,10 +1010,10 @@ export default function ListeningTestPage() {
                                           }
                                         }}
                                         onLoad={() => {
-                                          console.log(
-                                            "✅ Image loaded successfully:",
-                                            question.imageUrl
-                                          );
+                                          // console.log(
+                                          //   "✅ Image loaded successfully:",
+                                          //   question.imageUrl
+                                          // );
                                         }}
                                         style={{
                                           maxHeight: "700px",

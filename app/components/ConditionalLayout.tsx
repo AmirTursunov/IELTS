@@ -18,6 +18,7 @@ export default function ConditionalLayout({
     "/sign-up",
     "/forgot-password",
     "/reset-password",
+    "/dashboard", // /dashboard uchun
     "/listening/", // /listening/[id] uchun
     "/reading/", // /reading/[id] uchun (kelajakda)
     "/writing/", // /writing/[id] uchun (kelajakda)

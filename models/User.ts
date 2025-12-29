@@ -68,7 +68,11 @@ const UserSchema = new Schema<IUser>(
         },
         score: Number,
         bandScore: Number,
-        completedAt: { type: Date, default: Date.now },
+        completedAt: {
+          type: Date,
+          default: Date.now,
+          expires: 60,
+        },
       },
     ],
   },

@@ -257,9 +257,73 @@ export default function ReadingTestPage() {
   };
 
   const handleSubmit = async () => {
-    const resultData = calculateResult();
-    setResult(resultData);
-    setShowResult(true);
+    console.log("🚀 Submit button clicked!");
+    console.log("📊 Current answers:", answers);
+    console.log("🆔 Test ID:", testId);
+
+    // Prepare data for backend
+    const submitData = {
+      testId: testId,
+      testType: "reading",
+      answers: Object.entries(answers).map(([questionNumber, userAnswer]) => ({
+        questionNumber: parseInt(questionNumber),
+        userAnswer: userAnswer,
+      })),
+      timeSpent: test.timeLimit * 60 - timeRemaining,
+    };
+
+    console.log("📦 Data to submit:", JSON.stringify(submitData, null, 2));
+
+    try {
+      console.log("🔄 Sending request to /api/submit-test...");
+
+      const response = await fetch("/api/submit-test", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(submitData),
+      });
+
+      console.log("📡 Response status:", response.status);
+
+      const responseData = await response.json();
+      console.log("✅ Response data:", responseData);
+
+      if (responseData.success) {
+        console.log("🎉 Test submitted successfully!");
+        console.log("📊 Band Score:", responseData.data.bandScore);
+
+        // Calculate local result for display
+        const localResult = calculateResult();
+
+        // Merge with backend data
+        setResult({
+          ...localResult,
+          score: responseData.data.bandScore,
+          correct: responseData.data.correctAnswers,
+          total: responseData.data.totalQuestions,
+        });
+        setShowResult(true);
+      } else {
+        console.error("❌ Submission failed:", responseData.error);
+        alert("Failed to submit test: " + responseData.error);
+
+        // Fallback to local result
+        const localResult = calculateResult();
+        setResult(localResult);
+        setShowResult(true);
+      }
+    } catch (error) {
+      console.error("❌ Network error:", error);
+      alert("Network error occurred. Showing local results only.");
+
+      // Fallback to local result
+      const localResult = calculateResult();
+      setResult(localResult);
+      setShowResult(true);
+    }
+
     setShowSubmitModal(false);
   };
 

@@ -45,11 +45,6 @@ export async function GET(
       })),
     };
 
-    console.log(
-      "GET Test - Full test data:",
-      JSON.stringify(sanitizedTest, null, 2)
-    );
-
     return NextResponse.json({ success: true, data: sanitizedTest });
   } catch (error: any) {
     console.error("GET reading test error:", error);
