@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, JSX } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import {
   ChevronLeft,
@@ -15,6 +15,7 @@ import {
   Volume2,
   VolumeX,
   Headphones,
+  X,
 } from "lucide-react";
 import { QuestionNotes } from "../../components/QuestionNotes";
 
@@ -379,9 +380,9 @@ export default function ListeningTestPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-linear-to-br from-cyan-50 via-blue-50 to-indigo-100 flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-br from-purple-50 via-violet-50 to-purple-100 flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-cyan-600 mx-auto mb-4" />
+          <Loader2 className="h-12 w-12 animate-spin text-[#9C74FF] mx-auto mb-4" />
           <p className="text-gray-600 font-medium">Loading test...</p>
         </div>
       </div>
@@ -390,7 +391,7 @@ export default function ListeningTestPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-linear-to-br from-cyan-50 via-blue-50 to-indigo-100 flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-br from-purple-50 via-violet-50 to-purple-100 flex items-center justify-center">
         <div className="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full">
           <div className="text-center">
             <XCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
@@ -400,7 +401,7 @@ export default function ListeningTestPage() {
             <p className="text-gray-600 mb-6">{error}</p>
             <button
               onClick={() => router.push("/listening")}
-              className="px-6 py-3 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 font-semibold"
+              className="px-6 py-3 bg-[#9C74FF] text-white rounded-lg hover:bg-[#8B5FE8] font-semibold"
             >
               Back to Tests
             </button>
@@ -414,31 +415,32 @@ export default function ListeningTestPage() {
 
   if (!testStarted) {
     return (
-      <div className="min-h-screen bg-linear-to-br from-cyan-50 via-blue-50 to-indigo-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-2xl p-10 max-w-2xl w-full border-2 border-cyan-200">
+      <div className="min-h-screen bg-linear-to-br from-[#F5F2FF] via-[#EFE9FF] to-[#E6DEFF] flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-2xl p-10 max-w-2xl w-full border-2 border-[#9C74FF]/30">
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-linear-to-br from-cyan-400 to-blue-600 rounded-full mb-4 shadow-lg">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-linear-to-br from-[#9C74FF] to-[#7B4DFF] rounded-full mb-4 shadow-lg">
               <Headphones className="w-10 h-10 text-white" />
             </div>
+
             <h1 className="text-4xl font-bold text-gray-900 mb-3">
               {test.testName}
             </h1>
+
             <div className="flex items-center justify-center gap-4 text-sm">
-              {/* <span className="px-4 py-2 bg-cyan-100 text-cyan-800 rounded-full font-semibold">
-                {test.testType}
-              </span> */}
-              <span className="px-4 py-2 bg-blue-100 text-blue-800 rounded-full font-semibold capitalize">
+              <span className="px-4 py-2 bg-[#9C74FF]/20 text-[#9C74FF] rounded-full font-semibold capitalize">
                 {test.difficulty}
               </span>
             </div>
           </div>
 
           <div className="space-y-6 mb-8">
-            <div className="bg-linear-to-r from-cyan-50 to-blue-50 rounded-xl p-6 border border-cyan-200">
+            {/* INFO */}
+            <div className="bg-linear-to-r from-[#F5F2FF] to-[#EFE9FF] rounded-xl p-6 border border-[#9C74FF]/30">
               <h3 className="font-bold text-gray-900 mb-4 text-lg flex items-center gap-2">
-                <Clock className="w-5 h-5 text-cyan-600" />
+                <Clock className="w-5 h-5 text-[#9C74FF]" />
                 Test Information
               </h3>
+
               <div className="grid grid-cols-3 gap-4 text-sm">
                 <div>
                   <p className="text-gray-600 mb-1">Total Questions</p>
@@ -449,12 +451,14 @@ export default function ListeningTestPage() {
                     )}
                   </p>
                 </div>
+
                 <div>
-                  <p className="text-gray-600 mb-1">Sections</p>
+                  <p className="text-gray-600 mb-1">Parts</p>
                   <p className="font-bold text-gray-900">
                     {test.sections.length}
                   </p>
                 </div>
+
                 <div>
                   <p className="text-gray-600 mb-1">Format</p>
                   <p className="font-bold text-gray-900">IELTS Listening</p>
@@ -462,38 +466,33 @@ export default function ListeningTestPage() {
               </div>
             </div>
 
-            <div className="bg-yellow-50 border-l-4 border-yellow-500 p-6 rounded-r-xl">
-              <h4 className="font-bold text-yellow-900 mb-3 flex items-center gap-2">
+            {/* INSTRUCTIONS */}
+            <div className="bg-[#F5F2FF] border-l-4 border-[#9C74FF] p-6 rounded-r-xl">
+              <h4 className="font-bold text-[#9C74FF] mb-3 flex items-center gap-2">
                 ⚠️ Important Instructions
               </h4>
-              <ul className="space-y-1 text-sm text-yellow-900">
-                <li className="flex items-end gap-2">
-                  <span className="text-yellow-600 mt-1">•</span>
-                  <span>You will hear the audio ONCE for each section</span>
-                </li>
-                <li className="flex items-end gap-2">
-                  <span className="text-yellow-600 mt-1">•</span>
-                  <span>Answer all questions as you listen</span>
-                </li>
-                <li className="flex items-end gap-2">
-                  <span className="text-yellow-600 mt-1">•</span>
-                  <span>Write your answers in the spaces provided</span>
-                </li>
-                <li className="flex items-end gap-2">
-                  <span className="text-yellow-600 mt-1">•</span>
-                  <span>Follow word limits (e.g., ONE WORD ONLY)</span>
-                </li>
-                <li className="flex items-end gap-2">
-                  <span className="text-yellow-600 mt-1">•</span>
-                  <span>Timer starts when you begin the test</span>
-                </li>
+
+              <ul className="space-y-1 text-sm text-gray-700">
+                {[
+                  "You will hear the audio ONCE for each section",
+                  "Answer all questions as you listen",
+                  "Write your answers in the spaces provided",
+                  "Follow word limits (e.g., ONE WORD ONLY)",
+                  "Timer starts when you begin the test",
+                ].map((text, i) => (
+                  <li key={i} className="flex items-start gap-2">
+                    <span className="text-[#9C74FF] mt-1">•</span>
+                    <span>{text}</span>
+                  </li>
+                ))}
               </ul>
             </div>
           </div>
 
+          {/* START BUTTON */}
           <button
             onClick={() => setTestStarted(true)}
-            className="w-full py-4 bg-linear-to-r from-cyan-500 to-blue-600 text-white rounded-xl font-bold text-lg hover:from-cyan-600 hover:to-blue-700 transition-all shadow-lg transform hover:scale-105"
+            className="w-full py-4 bg-linear-to-r from-[#9C74FF] to-[#7B4DFF] text-white rounded-xl font-bold text-lg hover:from-[#8A63FF] hover:to-[#6A3CFF] transition-all shadow-lg transform hover:scale-105"
           >
             Start Test
           </button>
@@ -504,19 +503,19 @@ export default function ListeningTestPage() {
 
   if (showResult && result) {
     return (
-      <div className="min-h-screen bg-linear-to-br from-cyan-50 via-blue-50 to-indigo-100 p-8">
+      <div className="min-h-screen bg-linear-to-br from-purple-50 via-violet-50 to-purple-100 p-8">
         <div className="max-w-4xl mx-auto">
-          <div className="bg-white rounded-2xl shadow-2xl overflow-hidden border-2 border-cyan-200">
+          <div className="bg-white rounded-2xl shadow-2xl overflow-hidden border-2 border-[#9C74FF]/30">
             {/* Header */}
-            <div className="bg-linear-to-r from-cyan-500 to-blue-600 px-8 py-6 text-white">
+            <div className="bg-[#9C74FF] px-8 py-6 text-white">
               <h2 className="text-3xl font-bold mb-2">Test Results</h2>
-              <p className="text-cyan-100">{test.testName}</p>
+              <p className="text-purple-100">{test.testName}</p>
             </div>
 
             {/* Score Summary */}
-            <div className="p-8 border-b-2 border-cyan-100">
+            <div className="p-8 border-b-2 border-purple-100">
               <div className="text-center mb-8">
-                <div className="inline-flex items-center justify-center w-32 h-32 bg-linear-to-br from-cyan-400 to-blue-600 rounded-full mb-4 shadow-xl">
+                <div className="inline-flex items-center justify-center w-32 h-32 bg-[#9C74FF] rounded-full mb-4 shadow-xl">
                   <span className="text-5xl font-bold text-white">
                     {result.band}
                   </span>
@@ -632,16 +631,16 @@ export default function ListeningTestPage() {
             </div>
 
             {/* Actions */}
-            <div className="bg-linear-to-r from-cyan-50 to-blue-50 px-8 py-6 flex gap-4">
+            <div className="bg-purple-50 px-8 py-6 flex gap-4">
               <button
                 onClick={() => window.location.reload()}
-                className="flex-1 py-3 bg-white border-2 border-cyan-500 text-cyan-700 rounded-xl font-semibold hover:bg-cyan-50 transition-all"
+                className="flex-1 py-3 bg-white border-2 border-[#9C74FF] text-[#9C74FF] rounded-xl font-semibold hover:bg-purple-50 transition-all"
               >
                 Retake Test
               </button>
               <button
                 onClick={() => router.push("/listening")}
-                className="flex-1 py-3 bg-linear-to-r from-cyan-500 to-blue-600 text-white rounded-xl font-semibold hover:from-cyan-600 hover:to-blue-700 transition-all shadow-md"
+                className="flex-1 py-3 bg-[#9C74FF] text-white rounded-xl font-semibold hover:bg-[#8B5FE8] transition-all shadow-md"
               >
                 Back to Tests
               </button>
@@ -655,32 +654,38 @@ export default function ListeningTestPage() {
   const currentSection = test.sections[currentPart];
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-cyan-50 via-blue-50 to-indigo-100 flex flex-col">
+    <div className="min-h-screen bg-linear-to-br from-purple-50 via-violet-50 to-purple-100 flex flex-col">
       {/* Submit Confirmation Modal */}
       {showSubmitModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 border-2 border-cyan-200">
+          <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 border-2 border-[#9C74FF]/30">
+            {/* Close button */}
+            <button
+              onClick={() => setShowSubmitModal(false)}
+              className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-100 transition-colors"
+              aria-label="Close modal"
+            >
+              <X className="w-5 h-5 text-gray-500 hover:text-gray-700" />
+            </button>
+
             <div className="text-center">
               <div className="inline-flex items-center justify-center w-16 h-16 bg-yellow-100 rounded-full mb-4">
                 <Clock className="w-8 h-8 text-yellow-600" />
               </div>
+
               <h3 className="text-2xl font-bold text-gray-900 mb-3">
                 Submit Test?
               </h3>
+
               <p className="text-gray-600 mb-6">
                 Are you sure you want to submit? You won't be able to change
                 your answers after submission.
               </p>
+
               <div className="flex gap-3">
                 <button
-                  onClick={() => setShowSubmitModal(false)}
-                  className="flex-1 px-6 py-3 border-2 border-gray-300 rounded-xl text-gray-700 font-semibold hover:bg-gray-50"
-                >
-                  Review Answers
-                </button>
-                <button
                   onClick={handleSubmit}
-                  className="flex-1 px-6 py-3 bg-linear-to-r from-cyan-500 to-blue-600 text-white rounded-xl font-semibold hover:from-cyan-600 hover:to-blue-700 shadow-md"
+                  className="flex-1 px-6 py-3 bg-[#9C74FF] text-white rounded-xl font-semibold hover:bg-[#8B5FE8] shadow-md"
                 >
                   Submit Test
                 </button>
@@ -691,7 +696,7 @@ export default function ListeningTestPage() {
       )}
 
       {/* Top Header */}
-      <div className="bg-linear-to-r from-cyan-500 to-blue-600 text-white shadow-xl sticky top-0 z-40">
+      <div className="bg-[#9C74FF] text-white shadow-xl sticky top-0 z-40">
         <div className="max-w-full mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -703,15 +708,15 @@ export default function ListeningTestPage() {
               </button>
               <div>
                 <h1 className="text-xl font-bold">{test.testName}</h1>
-                <p className="text-sm text-cyan-100">
-                  Section {currentPart + 1} of {test.sections.length}
+                <p className="text-sm text-purple-100">
+                  Part {currentPart + 1} of {test.sections.length}
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-6">
               <button
                 onClick={() => setShowSubmitModal(true)}
-                className="px-6 py-2.5 bg-white text-cyan-700 rounded-lg font-bold hover:bg-cyan-50 transition-all shadow-md"
+                className="px-6 py-2.5 bg-white text-[#9C74FF] rounded-lg font-bold hover:bg-purple-50 transition-all shadow-md"
               >
                 Submit Test
               </button>
@@ -726,9 +731,9 @@ export default function ListeningTestPage() {
           <div className=" mx-auto p-8">
             {/* Audio Player - AT THE TOP */}
             {currentSection.audioUrl && (
-              <div className="bg-white rounded-2xl shadow-xl p-6 mb-8 border-2 border-cyan-200">
+              <div className="bg-white rounded-2xl shadow-xl p-6 mb-8 border-2 border-purple-200">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="p-3 bg-linear-to-br from-cyan-400 to-blue-600 rounded-xl">
+                  <div className="p-3 bg-linear-to-br bg-[#9C74FF] rounded-xl">
                     <Headphones className="w-6 h-6 text-white" />
                   </div>
                   <div>
@@ -751,7 +756,7 @@ export default function ListeningTestPage() {
                     max={duration || 0}
                     value={currentTime}
                     onChange={handleSeek}
-                    className="w-full h-2 bg-cyan-200 rounded-lg appearance-none cursor-pointer"
+                    className="w-full h-2 bg-purple-200 rounded-lg appearance-none cursor-pointer"
                     style={{
                       background: `linear-linear(to right, #06b6d4 0%, #06b6d4 ${
                         (currentTime / duration) * 100
@@ -771,14 +776,14 @@ export default function ListeningTestPage() {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={restartAudio}
-                      className="p-3 bg-cyan-100 hover:bg-cyan-200 rounded-xl text-cyan-700 transition-all"
+                      className="p-3 bg-purple-100 hover:bg-purple-200 rounded-xl text-[#9C74FF] transition-all"
                       title="Restart"
                     >
                       <RotateCcw className="w-5 h-5" />
                     </button>
                     <button
                       onClick={togglePlay}
-                      className="p-4 bg-linear-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 rounded-xl text-white transition-all shadow-md"
+                      className="p-4 bg-linear-to-r bg-[#9C74FF] hover:from-cyan-600 hover:to-blue-700 rounded-xl text-white transition-all shadow-md"
                     >
                       {isPlaying ? (
                         <Pause className="w-6 h-6" />
@@ -792,7 +797,7 @@ export default function ListeningTestPage() {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={toggleMute}
-                      className="p-2 hover:bg-cyan-100 rounded-lg transition-all"
+                      className="p-2 hover:bg-purple-100 rounded-lg transition-all"
                     >
                       {isMuted || volume === 0 ? (
                         <VolumeX className="w-5 h-5 text-gray-600" />
@@ -815,8 +820,8 @@ export default function ListeningTestPage() {
             )}
 
             {/* Questions Section */}
-            <div className="bg-white rounded-2xl shadow-xl border-2 border-cyan-100 overflow-hidden">
-              <div className="bg-linear-to-r from-cyan-500 to-blue-600 px-8 py-4">
+            <div className="bg-white rounded-2xl shadow-xl border-2 border-purple-100 overflow-hidden">
+              <div className="bg-linear-to-r bg-[#9C74FF] px-8 py-4">
                 <h2 className="text-2xl font-bold text-white">
                   {currentSection.title}
                 </h2>
@@ -824,336 +829,453 @@ export default function ListeningTestPage() {
 
               <div className="p-8">
                 <div className="space-y-6">
-                  {currentSection.questions.map(
-                    (question: any, qIdx: number) => {
-                      // Question grouping logic
-                      let showInstruction = false;
-                      let rangeStart = question.questionNumber;
-                      let rangeEnd = question.questionNumber;
+                  {(() => {
+                    const questions = currentSection.questions;
+                    const processedQuestions = new Set<number>();
+                    const elements: JSX.Element[] = [];
 
-                      if (
-                        qIdx === 0 ||
-                        currentSection.questions[qIdx - 1].questionType !==
-                          question.questionType
-                      ) {
-                        showInstruction = true;
-                        for (
-                          let i = qIdx + 1;
-                          i < currentSection.questions.length;
-                          i++
-                        ) {
+                    questions.forEach((question: any, qIdx: number) => {
+                      // Skip if already processed
+                      if (processedQuestions.has(qIdx)) return;
+
+                      // Check if this is a map/diagram question with image
+                      const isMapQuestion =
+                        question.questionType === "plan-map-diagram" &&
+                        question.imageUrl;
+
+                      if (isMapQuestion) {
+                        // Find ALL consecutive map questions with the SAME image
+                        const mapGroup: any[] = [question];
+                        processedQuestions.add(qIdx);
+                        const currentImageUrl = question.imageUrl;
+
+                        // Look ahead for more map questions with same image
+                        for (let i = qIdx + 1; i < questions.length; i++) {
+                          const nextQ = questions[i];
                           if (
-                            currentSection.questions[i].questionType ===
-                            question.questionType
+                            nextQ.questionType === "plan-map-diagram" &&
+                            nextQ.imageUrl === currentImageUrl
                           ) {
-                            rangeEnd =
-                              currentSection.questions[i].questionNumber;
-                          } else {
+                            mapGroup.push(nextQ);
+                            processedQuestions.add(i);
+                          } else if (
+                            nextQ.questionType !== "plan-map-diagram"
+                          ) {
+                            // Different question type, stop grouping
                             break;
                           }
                         }
-                      }
 
-                      const instructions: { [key: string]: string } = {
-                        "multiple-choice":
-                          "Choose the correct letter: A, B, C, or D.",
-                        "form-completion":
-                          "Complete the form below. Write NO MORE THAN TWO WORDS AND/OR A NUMBER.",
-                        "note-completion":
-                          "Complete the notes below. Write ONE WORD ONLY.",
-                        matching:
-                          "Match each statement with the correct option.",
-                        "short-answer":
-                          "Answer the questions. Write NO MORE THAN THREE WORDS.",
-                        "plan-map-diagram":
-                          "Label the plan/map/diagram. Write NO MORE THAN TWO WORDS.",
-                        "table-completion":
-                          "Complete the table below. Write ONE WORD AND/OR A NUMBER.",
-                        "flow-chart":
-                          "Complete the flow-chart. Write NO MORE THAN TWO WORDS.",
-                        "summary-completion":
-                          "Complete the summary. Write ONE WORD ONLY.",
-                        "sentence-completion":
-                          "Complete the sentences. Write NO MORE THAN TWO WORDS.",
-                      };
+                        // Render instruction banner
+                        const showInstruction =
+                          qIdx === 0 ||
+                          questions[qIdx - 1].questionType !==
+                            "plan-map-diagram";
+                        const rangeStart = mapGroup[0].questionNumber;
+                        const rangeEnd =
+                          mapGroup[mapGroup.length - 1].questionNumber;
 
-                      return (
-                        <div key={question.questionNumber}>
-                          {showInstruction && (
-                            <div className="bg-linear-to-r from-cyan-50 to-blue-50 border-l-4 border-cyan-500 p-3 rounded-r-lg mb-4 shadow-sm">
-                              <p className="font-bold text-gray-900 mb-1.5 text-sm">
-                                Questions {rangeStart}-{rangeEnd}
-                              </p>
-                              <p className="text-xs text-gray-700 leading-relaxed">
-                                {instructions[question.questionType] ||
-                                  "Read the instructions carefully."}
-                              </p>
-                            </div>
-                          )}
-
-                          <div
-                            className={`space-y-3 group relative transition-all ${
-                              flaggedQuestions.has(question.questionNumber)
-                                ? "bg-linear-to-r from-red-50 to-rose-50 border-2 border-red-300 rounded-xl p-5 shadow-md"
-                                : "hover:bg-gray-50 rounded-xl p-2"
-                            }`}
-                          >
-                            <div className="flex gap-3">
-                              <div className="flex items-start gap-2 shrink-0">
-                                <span className="font-bold text-gray-800 text-lg">
-                                  {question.questionNumber}.
-                                </span>
-                                <button
-                                  onClick={() =>
-                                    toggleFlag(question.questionNumber)
-                                  }
-                                  className={`mt-1 transition-all ${
-                                    flaggedQuestions.has(
-                                      question.questionNumber
-                                    )
-                                      ? "opacity-100 scale-110"
-                                      : "opacity-0 group-hover:opacity-100"
-                                  }`}
-                                  title="Flag for review"
-                                >
-                                  <Flag
-                                    size={18}
-                                    className={
-                                      flaggedQuestions.has(
-                                        question.questionNumber
-                                      )
-                                        ? "fill-red-500 text-red-500 drop-shadow-md"
-                                        : "text-gray-400 hover:text-red-500"
-                                    }
-                                  />
-                                </button>
-
-                                {/* Notes Component */}
-                                <div
-                                  className={`mt-1 transition-all ${
-                                    notes[question.questionNumber]
-                                      ? "opacity-100"
-                                      : "opacity-0 group-hover:opacity-100"
-                                  }`}
-                                >
-                                  <QuestionNotes
-                                    questionNumber={question.questionNumber}
-                                    initialNote={
-                                      notes[question.questionNumber] || ""
-                                    }
-                                    onSaveNote={handleSaveNote}
-                                  />
-                                </div>
-                              </div>
-
-                              <div className="flex-1">
-                                {/* DEBUG: Log question data */}
-
-                                <p className="text-gray-800 mb-4 leading-relaxed">
-                                  {question.question}
+                        elements.push(
+                          <div key={`map-group-${rangeStart}`}>
+                            {showInstruction && (
+                              <div className="bg-linear-to-r from-purple-50 to-violet-50 border-l-4 border-[#9C74FF] p-3 rounded-r-lg mb-4 shadow-sm">
+                                <p className="font-bold text-gray-900 mb-1.5 text-sm">
+                                  Questions {rangeStart}-{rangeEnd}
                                 </p>
+                                <p className="text-xs text-gray-700 leading-relaxed">
+                                  Label the plan/map/diagram. Write NO MORE THAN
+                                  TWO WORDS.
+                                </p>
+                              </div>
+                            )}
 
-                                {/* Display Image for ALL Questions with imageUrl */}
-                                {question.imageUrl && (
-                                  <div className="mb-6 bg-linear-to-br from-blue-50 to-cyan-50 rounded-2xl p-6 border-2 border-cyan-300 shadow-xl">
-                                    <div className="flex items-center justify-between mb-4">
-                                      <div className="flex items-center gap-3">
-                                        <div className="flex items-center justify-center w-8 h-8 bg-cyan-500 rounded-full">
-                                          <svg
-                                            className="w-5 h-5 text-white"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                          >
-                                            <path
-                                              strokeLinecap="round"
-                                              strokeLinejoin="round"
-                                              strokeWidth={2}
-                                              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                                            />
-                                          </svg>
-                                        </div>
-                                        <span className="text-base font-bold text-cyan-900 uppercase tracking-wide">
-                                          Reference Image
-                                        </span>
-                                      </div>
-                                      <span className="text-xs text-cyan-700 bg-white px-3 py-1.5 rounded-full border-2 border-cyan-300 font-semibold">
-                                        Study Carefully
-                                      </span>
-                                    </div>
-
-                                    <div className="bg-white rounded-xl p-4 shadow-inner border border-gray-200">
-                                      <img
-                                        src={question.imageUrl}
-                                        alt="Reference Map/Diagram/Plan"
-                                        className="w-full h-auto rounded-lg border-2 border-cyan-200 shadow-md hover:shadow-2xl transition-all duration-300"
-                                        onError={(e) => {
-                                          console.error(
-                                            "❌ Image failed to load:",
-                                            question.imageUrl
-                                          );
-                                          const parent =
-                                            e.currentTarget.parentElement;
-                                          if (parent) {
-                                            parent.innerHTML = `
-                                              <div class="flex items-center gap-3 p-5 bg-red-50 border-2 border-red-300 rounded-lg">
-                                                <svg class="w-8 h-8 text-red-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                                                </svg>
-                                                <div class="flex-1">
-                                                  <p class="text-red-800 font-bold text-sm mb-1">⚠️ Image Failed to Load</p>
-                                                  <p class="text-red-600 text-xs break-all">${question.imageUrl}</p>
-                                                  <p class="text-red-500 text-xs mt-2">Check browser console for details</p>
-                                                </div>
-                                              </div>
-                                            `;
-                                          }
-                                        }}
-                                        onLoad={() => {
-                                          // console.log(
-                                          //   "✅ Image loaded successfully:",
-                                          //   question.imageUrl
-                                          // );
-                                        }}
-                                        style={{
-                                          maxHeight: "700px",
-                                          objectFit: "contain",
-                                          width: "100%",
-                                        }}
+                            {/* SIDE-BY-SIDE LAYOUT: LEFT = MAP, RIGHT = ALL QUESTIONS */}
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6 bg-gradient-to-br from-purple-50 to-violet-50 rounded-2xl border-2 border-[#9C74FF]/30 shadow-xl">
+                              {/* LEFT SIDE - MAP IMAGE (STICKY) */}
+                              <div className="lg:sticky lg:top-24 lg:self-start">
+                                <div className="bg-white rounded-xl p-4 border-2 border-purple-200 shadow-lg">
+                                  <div className="flex items-center gap-2 mb-3 pb-3 border-purple-200">
+                                    <svg
+                                      className="w-6 h-6 text-[#9C74FF]"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
                                       />
-                                    </div>
-
-                                    {question.options?.[0] && (
-                                      <div className="mt-4 p-4 bg-cyan-50 border-l-4 border-cyan-500 rounded-r-xl">
-                                        <p className="text-sm text-cyan-900 flex items-start gap-2">
-                                          <span className="text-lg">💡</span>
-                                          <span>
-                                            <span className="font-bold">
-                                              Hint:{" "}
-                                            </span>
-                                            {question.options[0]}
-                                          </span>
-                                        </p>
-                                      </div>
-                                    )}
+                                    </svg>
                                   </div>
-                                )}
-
-                                {/* If no imageUrl for map question, show warning */}
-                                {!question.imageUrl &&
-                                  question.questionType ===
-                                    "plan-map-diagram" && (
-                                    <div className="mb-4 p-3 bg-yellow-50 border-l-4 border-yellow-400 rounded-r-lg">
-                                      <p className="text-sm text-yellow-800">
-                                        ⚠️ This is a map/diagram question but no
-                                        image is provided
+                                  <img
+                                    src={currentImageUrl}
+                                    alt="Map/Diagram"
+                                    className="w-full h-auto rounded-lg border-2 border-purple-300 shadow-md"
+                                    onError={(e) => {
+                                      const parent =
+                                        e.currentTarget.parentElement;
+                                      if (parent) {
+                                        parent.innerHTML = `<div class="p-4 bg-red-50 border-2 border-red-300 rounded-lg text-center"><p class="text-red-800 font-bold text-sm">⚠️ Image Failed to Load</p><p class="text-red-600 text-xs mt-2 break-all">${currentImageUrl}</p></div>`;
+                                      }
+                                    }}
+                                    style={{
+                                      maxHeight: "600px",
+                                      objectFit: "contain",
+                                    }}
+                                  />
+                                  {mapGroup[0].options?.[0] && (
+                                    <div className="mt-3 p-3 bg-purple-100 rounded-lg border-l-4 border-[#9C74FF]">
+                                      <p className="text-xs text-purple-900">
+                                        <span className="font-bold">
+                                          💡 Hint:{" "}
+                                        </span>
+                                        {mapGroup[0].options[0]}
                                       </p>
                                     </div>
                                   )}
+                                </div>
+                              </div>
 
-                                {/* Multiple Choice */}
-                                {question.questionType === "multiple-choice" &&
-                                  question.options && (
-                                    <div className="space-y-2">
-                                      {question.options.map(
-                                        (option: string, idx: number) => (
-                                          <label
-                                            key={idx}
-                                            className={`flex items-center gap-4 p-4 border-2 rounded-xl cursor-pointer transition-all ${
-                                              answers[
-                                                question.questionNumber
-                                              ] === option
-                                                ? "bg-cyan-50 border-cyan-400 shadow-md"
-                                                : "border-gray-200 hover:border-cyan-300 hover:bg-cyan-50/30"
-                                            }`}
-                                          >
-                                            <input
-                                              type="radio"
-                                              name={`question-${question.questionNumber}`}
-                                              value={option}
-                                              checked={
-                                                answers[
-                                                  question.questionNumber
-                                                ] === option
-                                              }
-                                              onChange={(e) =>
-                                                handleAnswerChange(
-                                                  question.questionNumber,
-                                                  e.target.value
-                                                )
-                                              }
-                                              className="w-5 h-5 text-cyan-600 focus:ring-2 focus:ring-cyan-500"
-                                            />
-                                            <span className="text-gray-800 font-medium">
-                                              {option}
-                                            </span>
-                                          </label>
-                                        )
-                                      )}
+                              {/* RIGHT SIDE - ALL QUESTIONS */}
+                              <div className="space-y-3">
+                                <h3 className="font-bold text-gray-900 text-lg mb-4 pb-3 border-b-2 border-purple-300 flex items-center gap-2">
+                                  <span className="text-2xl">📍</span>
+                                  Label the following on the map:
+                                </h3>
+                                {mapGroup.map((q: any) => (
+                                  <div
+                                    key={q.questionNumber}
+                                    className={`group relative rounded-xl p-4 transition-all ${
+                                      flaggedQuestions.has(q.questionNumber)
+                                        ? "bg-red-50 border-2 border-red-400 shadow-md"
+                                        : "bg-white hover:bg-purple-50 border-2 border-purple-200 hover:border-[#9C74FF] hover:shadow-md"
+                                    }`}
+                                  >
+                                    <div className="flex items-center gap-3">
+                                      {/* Question Number */}
+                                      <span className="font-black text-[#9C74FF] text-lg shrink-0 w-8">
+                                        {q.questionNumber}.
+                                      </span>
+
+                                      <div className="flex items-center map-5">
+                                        {/* Flag Button */}
+                                        <button
+                                          onClick={() =>
+                                            toggleFlag(q.questionNumber)
+                                          }
+                                          className={`shrink-0 transition-all ${
+                                            flaggedQuestions.has(
+                                              q.questionNumber
+                                            )
+                                              ? "opacity-100"
+                                              : "opacity-0 group-hover:opacity-100"
+                                          }`}
+                                        >
+                                          <Flag
+                                            size={16}
+                                            className={
+                                              flaggedQuestions.has(
+                                                q.questionNumber
+                                              )
+                                                ? "fill-red-500 text-red-500"
+                                                : "text-gray-400 hover:text-red-500"
+                                            }
+                                          />
+                                        </button>
+                                        {/* Note */}
+                                        <div
+                                          className={`mt-1 transition-all ${
+                                            notes[question.questionNumber]
+                                              ? "opacity-100"
+                                              : "opacity-0 group-hover:opacity-100"
+                                          }`}
+                                        >
+                                          <QuestionNotes
+                                            questionNumber={
+                                              question.questionNumber
+                                            }
+                                            initialNote={
+                                              notes[question.questionNumber] ||
+                                              ""
+                                            }
+                                            onSaveNote={handleSaveNote}
+                                          />
+                                        </div>
+                                      </div>
+
+                                      {/* Question & Answer */}
+                                      <div className="flex-1 flex items-center gap-3">
+                                        <p className="text-gray-800 font-medium text-base shrink-0">
+                                          {q.question}
+                                        </p>
+                                        <input
+                                          type="text"
+                                          className="flex-1 border rounded mb-2 min-w-[200px] max-w-xs px-3 py-1.5 border-b-2 border-gray-300 focus:outline-none focus:border-[#9C74FF] text-gray-800 font-medium text-sm bg-transparent transition-colors"
+                                          placeholder="Your answer"
+                                          value={
+                                            answers[question.questionNumber] ||
+                                            ""
+                                          }
+                                          onChange={(e) =>
+                                            handleAnswerChange(
+                                              question.questionNumber,
+                                              e.target.value
+                                            )
+                                          }
+                                        />
+                                      </div>
                                     </div>
-                                  )}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      } else {
+                        // REGULAR QUESTION (NOT MAP/DIAGRAM)
+                        processedQuestions.add(qIdx);
 
-                                {/* Matching */}
-                                {question.questionType === "matching" &&
-                                  question.options && (
-                                    <select
-                                      className="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 text-gray-800 font-medium bg-white"
-                                      value={
-                                        answers[question.questionNumber] || ""
-                                      }
-                                      onChange={(e) =>
-                                        handleAnswerChange(
-                                          question.questionNumber,
-                                          e.target.value
-                                        )
-                                      }
-                                    >
-                                      <option value="">Select an answer</option>
-                                      {question.options.map(
-                                        (option: string, idx: number) => (
-                                          <option key={idx} value={option}>
-                                            {option}
-                                          </option>
-                                        )
-                                      )}
-                                    </select>
-                                  )}
+                        // Check if instruction needed
+                        const showInstruction =
+                          qIdx === 0 ||
+                          questions[qIdx - 1].questionType !==
+                            question.questionType;
+                        let rangeStart = question.questionNumber;
+                        let rangeEnd = question.questionNumber;
 
-                                {/* All Text Input Types */}
-                                {(question.questionType === "form-completion" ||
+                        if (showInstruction) {
+                          for (let i = qIdx + 1; i < questions.length; i++) {
+                            if (
+                              questions[i].questionType ===
+                              question.questionType
+                            ) {
+                              rangeEnd = questions[i].questionNumber;
+                            } else {
+                              break;
+                            }
+                          }
+                        }
+
+                        const instructions: { [key: string]: string } = {
+                          "multiple-choice":
+                            "Choose the correct letter: A, B, C, or D.",
+                          "form-completion":
+                            "Complete the form below. Write NO MORE THAN TWO WORDS AND/OR A NUMBER.",
+                          "note-completion":
+                            "Complete the notes below. Write ONE WORD ONLY.",
+                          matching:
+                            "Match each statement with the correct option.",
+                          "short-answer":
+                            "Answer the questions. Write NO MORE THAN THREE WORDS.",
+                          "table-completion":
+                            "Complete the table below. Write ONE WORD AND/OR A NUMBER.",
+                          "flow-chart":
+                            "Complete the flow-chart. Write NO MORE THAN TWO WORDS.",
+                          "summary-completion":
+                            "Complete the summary. Write ONE WORD ONLY.",
+                          "sentence-completion":
+                            "Complete the sentences. Write NO MORE THAN TWO WORDS.",
+                        };
+
+                        elements.push(
+                          <div key={question.questionNumber}>
+                            {showInstruction && (
+                              <div className="bg-linear-to-r from-purple-50 to-violet-50 border-l-4 border-[#9C74FF] p-3 rounded-r-lg mb-4 shadow-sm">
+                                <p className="font-bold text-gray-900 mb-1.5 text-sm">
+                                  Questions {rangeStart}-{rangeEnd}
+                                </p>
+                                <p className="text-xs text-gray-700 leading-relaxed">
+                                  {instructions[question.questionType] ||
+                                    "Read the instructions carefully."}
+                                </p>
+                              </div>
+                            )}
+
+                            <div
+                              className={`space-y-3 group relative transition-all ${
+                                flaggedQuestions.has(question.questionNumber)
+                                  ? "bg-linear-to-r from-red-50 to-rose-50 border-2 border-red-300 rounded-xl p-5 shadow-md"
+                                  : "hover:bg-gray-50 rounded-xl p-2"
+                              }`}
+                            >
+                              <div className="flex gap-3">
+                                <div className="flex items-start gap-2 shrink-0">
+                                  <span className="font-bold text-gray-800 text-lg">
+                                    {question.questionNumber}.
+                                  </span>
+                                  <button
+                                    onClick={() =>
+                                      toggleFlag(question.questionNumber)
+                                    }
+                                    className={`mt-1 transition-all ${
+                                      flaggedQuestions.has(
+                                        question.questionNumber
+                                      )
+                                        ? "opacity-100 scale-110"
+                                        : "opacity-0 group-hover:opacity-100"
+                                    }`}
+                                  >
+                                    <Flag
+                                      size={18}
+                                      className={
+                                        flaggedQuestions.has(
+                                          question.questionNumber
+                                        )
+                                          ? "fill-red-500 text-red-500 drop-shadow-md"
+                                          : "text-gray-400 hover:text-red-500"
+                                      }
+                                    />
+                                  </button>
+                                  <div
+                                    className={`mt-1 transition-all ${
+                                      notes[question.questionNumber]
+                                        ? "opacity-100"
+                                        : "opacity-0 group-hover:opacity-100"
+                                    }`}
+                                  >
+                                    <QuestionNotes
+                                      questionNumber={question.questionNumber}
+                                      initialNote={
+                                        notes[question.questionNumber] || ""
+                                      }
+                                      onSaveNote={handleSaveNote}
+                                    />
+                                  </div>
+                                </div>
+
+                                <div className="flex-1">
+                                  {/* Inline input for text-based questions */}
+                                  {question.questionType ===
+                                    "form-completion" ||
                                   question.questionType === "note-completion" ||
                                   question.questionType === "short-answer" ||
-                                  question.questionType ===
-                                    "plan-map-diagram" ||
                                   question.questionType ===
                                     "table-completion" ||
                                   question.questionType === "flow-chart" ||
                                   question.questionType ===
                                     "summary-completion" ||
                                   question.questionType ===
-                                    "sentence-completion") && (
-                                  <input
-                                    type="text"
-                                    className="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 text-gray-800 font-medium"
-                                    placeholder="Type your answer here..."
-                                    value={
-                                      answers[question.questionNumber] || ""
-                                    }
-                                    onChange={(e) =>
-                                      handleAnswerChange(
-                                        question.questionNumber,
-                                        e.target.value
-                                      )
-                                    }
-                                  />
-                                )}
+                                    "sentence-completion" ? (
+                                    <div className="flex items-center gap-3 mb-4">
+                                      <p className="text-gray-800 leading-relaxed shrink-0">
+                                        {question.question}
+                                      </p>
+                                      <input
+                                        type="text"
+                                        className="flex-1 border rounded mb-2 min-w-[200px] max-w-xs px-3 py-1.5 border-b-2 border-gray-300 focus:outline-none focus:border-[#9C74FF] text-gray-800 font-medium text-sm bg-transparent transition-colors"
+                                        placeholder="Your answer"
+                                        value={
+                                          answers[question.questionNumber] || ""
+                                        }
+                                        onChange={(e) =>
+                                          handleAnswerChange(
+                                            question.questionNumber,
+                                            e.target.value
+                                          )
+                                        }
+                                      />
+                                    </div>
+                                  ) : (
+                                    <p className="text-gray-800 mb-4 leading-relaxed">
+                                      {question.question}
+                                    </p>
+                                  )}
+
+                                  {/* Image for non-map questions */}
+                                  {question.imageUrl &&
+                                    question.questionType !==
+                                      "plan-map-diagram" && (
+                                      <div className="mb-4">
+                                        <img
+                                          src={question.imageUrl}
+                                          alt="Question reference"
+                                          className="w-full max-w-md rounded-lg border-2 border-gray-200"
+                                        />
+                                      </div>
+                                    )}
+
+                                  {/* Multiple Choice */}
+                                  {question.questionType ===
+                                    "multiple-choice" &&
+                                    question.options && (
+                                      <div className="space-y-2">
+                                        {question.options.map(
+                                          (option: string, idx: number) => (
+                                            <label
+                                              key={idx}
+                                              className={`flex items-center gap-3 p-3 border-2 rounded-lg cursor-pointer transition-all ${
+                                                answers[
+                                                  question.questionNumber
+                                                ] === option
+                                                  ? "bg-purple-50 border-[#9C74FF] shadow-md"
+                                                  : "border-gray-200 hover:border-[#9C74FF]/50 hover:bg-purple-50/30"
+                                              }`}
+                                            >
+                                              <input
+                                                type="radio"
+                                                name={`question-${question.questionNumber}`}
+                                                value={option}
+                                                checked={
+                                                  answers[
+                                                    question.questionNumber
+                                                  ] === option
+                                                }
+                                                onChange={(e) =>
+                                                  handleAnswerChange(
+                                                    question.questionNumber,
+                                                    e.target.value
+                                                  )
+                                                }
+                                                className="w-4 h-4 text-[#9C74FF] focus:ring-2 focus:ring-[#9C74FF]"
+                                              />
+                                              <span className="text-gray-800 font-medium text-sm">
+                                                {option}
+                                              </span>
+                                            </label>
+                                          )
+                                        )}
+                                      </div>
+                                    )}
+
+                                  {/* Matching */}
+                                  {question.questionType === "matching" &&
+                                    question.options && (
+                                      <select
+                                        className="w-full max-w-md px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#9C74FF] text-gray-800 font-medium bg-white text-sm"
+                                        value={
+                                          answers[question.questionNumber] || ""
+                                        }
+                                        onChange={(e) =>
+                                          handleAnswerChange(
+                                            question.questionNumber,
+                                            e.target.value
+                                          )
+                                        }
+                                      >
+                                        <option value="">
+                                          Select an answer
+                                        </option>
+                                        {question.options.map(
+                                          (option: string, idx: number) => (
+                                            <option key={idx} value={option}>
+                                              {option}
+                                            </option>
+                                          )
+                                        )}
+                                      </select>
+                                    )}
+                                </div>
                               </div>
                             </div>
                           </div>
-                        </div>
-                      );
-                    }
-                  )}
+                        );
+                      }
+                    });
+
+                    return elements;
+                  })()}
                 </div>
               </div>
             </div>
@@ -1162,7 +1284,7 @@ export default function ListeningTestPage() {
       </div>
 
       {/* Navigation Footer */}
-      <div className="bg-white border-t-2 border-cyan-100 shrink-0 shadow-lg  z-30 fixed bottom-0 w-full">
+      <div className="bg-white border-t-2 border-purple-100 shrink-0 shadow-lg  z-30 fixed bottom-0 w-full">
         <div className="max-w-full mx-auto px-6 py-2.5">
           <div className="flex items-center justify-between">
             <div className="flex gap-2">
@@ -1175,7 +1297,7 @@ export default function ListeningTestPage() {
                   }}
                   className={`px-4 py-1.5 rounded-lg font-bold text-sm transition-all transform hover:scale-105 ${
                     idx === currentPart
-                      ? "bg-linear-to-r from-cyan-500 to-blue-600 text-white shadow-md"
+                      ? "bg-linear-to-r bg-[#9C74FF] text-white shadow-md"
                       : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"
                   }`}
                 >
@@ -1195,7 +1317,7 @@ export default function ListeningTestPage() {
               <button
                 onClick={goToNextPart}
                 disabled={currentPart === test.sections.length - 1}
-                className="px-6 py-1.5 bg-linear-to-r from-cyan-500 to-blue-600 text-white rounded-lg text-sm hover:from-cyan-600 hover:to-blue-700 disabled:opacity-30 disabled:cursor-not-allowed font-semibold shadow-md transition-all"
+                className="px-6 py-1.5 bg-linear-to-r bg-[#9C74FF] text-white rounded-lg text-sm hover:from-cyan-600 hover:to-blue-700 disabled:opacity-30 disabled:cursor-not-allowed font-semibold shadow-md transition-all"
               >
                 Next →
               </button>

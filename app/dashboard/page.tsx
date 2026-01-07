@@ -2,7 +2,7 @@
 "use client";
 
 import { useSession, signOut } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
@@ -247,6 +247,13 @@ export default function DashboardPage() {
                   <Settings className="w-5 h-5 text-gray-600" />
                 </button>
                 <button
+                  onClick={() => router.push("/dashboard/leaderboard")}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  title="Leaderboard"
+                >
+                  <Trophy className="w-5 h-5 text-gray-600" />
+                </button>
+                <button
                   onClick={handleSignOut}
                   className="p-2 hover:bg-red-50 rounded-lg transition-colors group"
                   title="Sign Out"
@@ -288,19 +295,29 @@ export default function DashboardPage() {
             </p>
           </div>
 
-          <div className="bg-white/80 backdrop-blur-xl rounded-2xl p-6 border-2 border-white/50 shadow-lg hover:shadow-xl transition-all group">
+          <div className="relative overflow-hidden bg-white/80 backdrop-blur-xl rounded-2xl p-6 border-2 border-white/50 shadow-lg hover:shadow-xl transition-all group cursor-pointer">
+            {/* Asosiy kontent */}
             <div className="flex items-center justify-between mb-4">
               <div className="p-3 bg-linear-to-r from-purple-500 to-pink-500 rounded-xl">
                 <Award className="w-6 h-6 text-white" />
               </div>
               <BarChart3 className="w-5 h-5 text-purple-500" />
             </div>
+
             <p className="text-3xl font-black text-gray-900 mb-1">
               {data.stats.averageBand.toFixed(1)}
             </p>
             <p className="text-sm text-gray-600 font-semibold">
               Average Band Score
             </p>
+
+            {/* Hover Overlay */}
+            <div
+              onClick={() => redirect("/dashboard/leaderboard")}
+              className="absolute inset-x-0 bottom-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out bg-linear-to-r from-purple-600 to-pink-600 text-white text-sm font-bold flex items-center justify-center gap-2 py-3"
+            >
+              View Leaderboard
+            </div>
           </div>
 
           <div className="bg-white/80 backdrop-blur-xl rounded-2xl p-6 border-2 border-white/50 shadow-lg hover:shadow-xl transition-all group">
@@ -369,12 +386,12 @@ export default function DashboardPage() {
               ) : (
                 <>
                   <div className="space-y-4">
-                    {data.recentTests.map((test) => {
+                    {data.recentTests.map((test, i) => {
                       const Icon = getTestIcon(test.type);
                       const color = getTestColor(test.type);
                       return (
                         <div
-                          key={test.id}
+                          key={`${test.id}-${i}-${test.date}`}
                           className="flex items-center gap-4 p-4 bg-linear-to-r from-white to-gray-50 rounded-xl border-2 border-gray-100 hover:border-blue-200 transition-all group cursor-pointer"
                         >
                           <div

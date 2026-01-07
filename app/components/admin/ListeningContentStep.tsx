@@ -24,6 +24,7 @@ export const ListeningContentStep: FC<ListeningContentStepProps> = ({
       sections: [
         ...(formData.sections || []),
         {
+          sectionNumber: (formData.sections?.length || 0) + 1,
           title: "",
           audioUrl: "",
           transcript: "",
@@ -54,10 +55,11 @@ export const ListeningContentStep: FC<ListeningContentStepProps> = ({
     const newSections = [...formData.sections];
     newSections[sectionIndex].questions.push({
       questionNumber: newSections[sectionIndex].questions.length + 1,
-      questionText: "",
+      question: "",
       questionType: "multiple-choice",
       options: ["", "", "", ""],
       correctAnswer: "",
+      points: 1,
     });
     setFormData({ ...formData, sections: newSections });
   };

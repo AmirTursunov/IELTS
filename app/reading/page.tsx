@@ -140,6 +140,7 @@ export default function ReadingTestsPage() {
 
       <main className="max-w-7xl mx-auto px-6 py-12">
         {/* Hero Section */}
+        {/* Hero Section */}
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 bg-white px-6 py-3 rounded-full shadow-md mb-6 border border-cyan-200">
             <Award className="text-cyan-600" size={24} />
@@ -147,7 +148,7 @@ export default function ReadingTestsPage() {
               Official IELTS Practice
             </span>
           </div>
-          <h2 className="text-5xl font-bold bg-linear-to-r from-cyan-600 to-blue-700 bg-clip-text text-transparent mb-4">
+          <h2 className="text-5xl font-bold text-cyan-600 mb-4 leading-tight">
             Practice IELTS Reading Tests
           </h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">

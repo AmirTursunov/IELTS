@@ -847,7 +847,7 @@ export default function ReadingTestPage() {
         <div className="max-w-full mx-auto px-6 py-2.5 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => router.push("/")}
+              onClick={() => router.push("/reading")}
               className="flex items-center gap-1.5 text-white hover:text-cyan-100 transition-colors bg-white/10 px-3 py-1.5 rounded-lg text-sm"
             >
               <ChevronLeft size={16} />

@@ -14,11 +14,13 @@ export default function ConditionalLayout({
 
   // Navbar va Footer ko'rinmaydigan sahifalar ro'yxati
   const hideLayoutPaths = [
+    "/admin",
     "/sign-in",
     "/sign-up",
     "/forgot-password",
     "/reset-password",
     "/dashboard", // /dashboard uchun
+    "/leaderboard",
     "/listening/", // /listening/[id] uchun
     "/reading/", // /reading/[id] uchun (kelajakda)
     "/writing/", // /writing/[id] uchun (kelajakda)

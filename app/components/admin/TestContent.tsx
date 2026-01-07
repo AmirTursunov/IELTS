@@ -6,6 +6,7 @@ import { ReadingTest, ListeningTest } from "@/types";
 import { AddTestModal } from "./AddTestModal";
 import { EditTestModal } from "./EditTestModal";
 import { AddListeningTestModal } from "./ListeningModal";
+import { EditListeningModal } from "./EditListeningModal";
 
 interface TestsContentProps {
   type: "reading" | "listening";
@@ -28,6 +29,8 @@ export const TestsContent: FC<TestsContentProps> = ({
   >("");
   const [showModal, setShowModal] = useState(false);
   const [editingTest, setEditingTest] = useState<ReadingTest | null>(null);
+  const [editingListeningTest, setEditingListeningTest] =
+    useState<ListeningTest | null>(null);
 
   const handleSearch = (e: ChangeEvent<HTMLInputElement>) =>
     setSearchTerm(e.target.value);
@@ -58,11 +61,14 @@ export const TestsContent: FC<TestsContentProps> = ({
   const handleEdit = (test: ReadingTest | ListeningTest) => {
     if (type === "reading") {
       setEditingTest(test as ReadingTest);
+    } else if (type === "listening") {
+      setEditingListeningTest(test as ListeningTest);
     }
   };
 
   const handleEditSuccess = () => {
     setEditingTest(null);
+    setEditingListeningTest(null);
     onRefresh();
   };
 
@@ -231,6 +237,13 @@ export const TestsContent: FC<TestsContentProps> = ({
         <EditTestModal
           test={editingTest as any}
           onClose={() => setEditingTest(null)}
+          onSuccess={handleEditSuccess}
+        />
+      )}
+      {editingListeningTest && (
+        <EditListeningModal
+          test={editingListeningTest as any}
+          onClose={() => setEditingListeningTest(null)}
           onSuccess={handleEditSuccess}
         />
       )}

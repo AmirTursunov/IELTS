@@ -59,7 +59,7 @@ export default function SignInPage() {
               href="/"
               className="inline-flex items-center gap-2 mb-4 group"
             >
-              <div className="bg-linear-to-r from-cyan-500 to-blue-600 px-4 py-2 rounded-xl font-black text-xl text-white shadow-lg group-hover:scale-105 transition-transform">
+              <div className="bg-[#9C74FF] px-4 py-2 rounded-xl font-black text-xl text-white shadow-lg group-hover:scale-105 transition-transform">
                 IELTS
               </div>
             </Link>
@@ -136,7 +136,7 @@ export default function SignInPage() {
               </label>
               <Link
                 href="/forgot-password"
-                className="font-bold text-blue-600 hover:text-blue-700"
+                className="font-bold text-[#9C74FF]"
               >
                 Forgot password?
               </Link>
@@ -145,7 +145,7 @@ export default function SignInPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 bg-linear-to-r from-cyan-500 to-blue-600 text-white rounded-xl font-bold hover:from-cyan-600 hover:to-blue-700 transition-all shadow-lg disabled:opacity-50 flex items-center justify-center gap-2 group"
+              className="w-full py-3 bg-[#9C74FF] text-white rounded-xl font-bold hover:bg-[#5f25f1bd] transition-all shadow-lg disabled:opacity-50 flex items-center justify-center gap-2 group"
             >
               {loading ? (
                 <>
@@ -199,7 +199,7 @@ export default function SignInPage() {
             Don't have an account?{" "}
             <Link
               href="/sign-up"
-              className="font-black text-transparent bg-clip-text bg-linear-to-r from-cyan-600 to-blue-600"
+              className="font-black text-transparent bg-clip-text bg-[#9C74FF]"
             >
               Sign up free →
             </Link>
