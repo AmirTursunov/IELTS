@@ -1,4 +1,5 @@
 "use client";
+
 import React, { FC, useState } from "react";
 import {
   X,
@@ -10,6 +11,7 @@ import {
   Loader2,
   Image as ImageIcon,
   Check,
+  BookOpen,
 } from "lucide-react";
 
 const API_BASE = "/api";
@@ -32,6 +34,7 @@ interface QuestionGroup {
   count: number;
   sharedImageUrl?: string;
   questions: Array<{
+    contextText?: string;
     question: string;
     options?: string[];
     correctAnswer: string;
@@ -45,6 +48,284 @@ interface Section {
   questionGroups: QuestionGroup[];
   totalQuestions: number;
 }
+
+// NAMUNA TEST — "Load Sample Test" bosilganda shu yuklanadi
+const SAMPLE_TEST_DATA = {
+  testName: "IELTS Listening Practice Test - Full Sample",
+  difficulty: "medium" as const,
+  timeLimit: 30,
+  sections: [
+    {
+      sectionNumber: 1,
+      title: "Hotel Booking Conversation",
+      audioUrl: "",
+      questionGroups: [
+        {
+          id: "g1",
+          type: "form-completion" as const,
+          count: 10,
+          questions: [
+            {
+              contextText: "A customer is booking a room over the phone.",
+              question: "Guest name: 1. ________",
+              correctAnswer: "James Carter",
+            },
+            {
+              question: "Arrival date: 2. ________",
+              correctAnswer: "15th July",
+            },
+            {
+              question: "Number of nights: 3. ________",
+              correctAnswer: "4",
+            },
+            {
+              question: "Room type: 4. ________",
+              correctAnswer: "double",
+            },
+            {
+              question: "Special request: 5. ________ view",
+              correctAnswer: "sea",
+            },
+            {
+              question: "Breakfast: 6. ________",
+              correctAnswer: "included",
+            },
+            {
+              question: "Parking: 7. ________",
+              correctAnswer: "yes",
+            },
+            {
+              question: "Payment by: 8. ________ card",
+              correctAnswer: "credit",
+            },
+            {
+              question: "Total cost: 9. ________",
+              correctAnswer: "£480",
+            },
+            {
+              question: "Confirmation number: 10. ________",
+              correctAnswer: "BK56789",
+            },
+          ],
+        },
+      ],
+      totalQuestions: 10,
+    },
+    {
+      sectionNumber: 2,
+      title: "Museum Tour Guide",
+      audioUrl: "",
+      questionGroups: [
+        {
+          id: "g2",
+          type: "note-completion" as const,
+          count: 6,
+          questions: [
+            {
+              contextText: "The guide is describing the museum's history.",
+              question: "Museum founded in: 11. ________",
+              correctAnswer: "1885",
+            },
+            {
+              question: "Original building: 12. ________ hall",
+              correctAnswer: "town",
+            },
+            {
+              question: "First collection: 13. ________ artifacts",
+              correctAnswer: "Roman",
+            },
+            {
+              question: "Famous exhibit: 14. ________ statue",
+              correctAnswer: "marble",
+            },
+            {
+              question: "Renovated in: 15. ________",
+              correctAnswer: "2010",
+            },
+            {
+              question: "New wing for: 16. ________ art",
+              correctAnswer: "modern",
+            },
+          ],
+        },
+        {
+          id: "g3",
+          type: "multiple-choice" as const,
+          count: 4,
+          questions: [
+            {
+              question: "17. Entry free on:",
+              options: ["Monday", "Wednesday", "Friday", "Sunday"],
+              correctAnswer: "Wednesday",
+            },
+            {
+              question: "18. Guided tour duration:",
+              options: ["30 min", "45 min", "1 hour", "90 min"],
+              correctAnswer: "1 hour",
+            },
+            {
+              question: "19. Cafe location:",
+              options: [
+                "ground floor",
+                "first floor",
+                "second floor",
+                "basement",
+              ],
+              correctAnswer: "second floor",
+            },
+            {
+              question: "20. Photography allowed:",
+              options: ["everywhere", "some areas", "nowhere", "with flash"],
+              correctAnswer: "some areas",
+            },
+          ],
+        },
+      ],
+      totalQuestions: 10,
+    },
+    {
+      sectionNumber: 3,
+      title: "University Campus Tour",
+      audioUrl: "",
+      questionGroups: [
+        {
+          id: "g4",
+          type: "plan-map-diagram" as const,
+          count: 6,
+          sharedImageUrl:
+            "https://res.cloudinary.com/demo/image/upload/sample.jpg",
+          questions: [
+            {
+              contextText: "Two students are looking at a campus map.",
+              question: "Library: 21. ________",
+              correctAnswer: "A",
+            },
+            {
+              question: "Student union: 22. ________",
+              correctAnswer: "B",
+            },
+            {
+              question: "Sports center: 23. ________",
+              correctAnswer: "C",
+            },
+            {
+              question: "Cafeteria: 24. ________",
+              correctAnswer: "D",
+            },
+            {
+              question: "Accommodation: 25. ________",
+              correctAnswer: "E",
+            },
+            {
+              question: "Main gate: 26. ________",
+              correctAnswer: "F",
+            },
+          ],
+        },
+        {
+          id: "g5",
+          type: "sentence-completion" as const,
+          count: 4,
+          questions: [
+            {
+              question: "Orientation starts on 27. ________",
+              correctAnswer: "Monday",
+            },
+            {
+              question: "Welcome lecture at 28. ________ hall",
+              correctAnswer: "main",
+            },
+            {
+              question: "Library cards from 29. ________ desk",
+              correctAnswer: "information",
+            },
+            {
+              question: "Societies fair in 30. ________ building",
+              correctAnswer: "student union",
+            },
+          ],
+        },
+      ],
+      totalQuestions: 10,
+    },
+    {
+      sectionNumber: 4,
+      title: "Lecture on Climate Change",
+      audioUrl: "",
+      questionGroups: [
+        {
+          id: "g6",
+          type: "summary-completion" as const,
+          count: 7,
+          questions: [
+            {
+              contextText: "The professor discusses global warming effects.",
+              question: "Main cause: 31. ________ emissions",
+              correctAnswer: "greenhouse",
+            },
+            {
+              question: "Ice caps are 32. ________",
+              correctAnswer: "melting",
+            },
+            {
+              question: "Sea levels 33. ________",
+              correctAnswer: "rising",
+            },
+            {
+              question: "Species face 34. ________",
+              correctAnswer: "extinction",
+            },
+            {
+              question: "Use more 35. ________ energy",
+              correctAnswer: "renewable",
+            },
+            {
+              question: "Reduce 36. ________ fuel use",
+              correctAnswer: "fossil",
+            },
+            {
+              question: "Help by 37. ________ waste",
+              correctAnswer: "reducing",
+            },
+          ],
+        },
+        {
+          id: "g7",
+          type: "matching" as const,
+          count: 3,
+          questions: [
+            {
+              question: "38. CO2 →",
+              options: [
+                "main greenhouse gas",
+                "helps plants",
+                "causes rain",
+                "from volcanoes",
+              ],
+              correctAnswer: "main greenhouse gas",
+            },
+            {
+              question: "39. Paris Agreement →",
+              options: ["2010", "2015", "2020", "2022"],
+              correctAnswer: "2015",
+            },
+            {
+              question: "40. Reforestation →",
+              options: [
+                "increases CO2",
+                "reduces CO2",
+                "no effect",
+                "increases flooding",
+              ],
+              correctAnswer: "reduces CO2",
+            },
+          ],
+        },
+      ],
+      totalQuestions: 10,
+    },
+  ] as Section[],
+};
 
 const QUESTION_TYPES = [
   { value: "multiple-choice", label: "Multiple Choice", needsOptions: true },
@@ -105,6 +386,23 @@ export const AddListeningTestModal: FC<{
   const [uploading, setUploading] = useState<{ [key: string]: boolean }>({});
   const [loading, setLoading] = useState(false);
 
+  // YANGI: Sample test yuklash
+  const loadSampleTest = () => {
+    if (
+      !confirm(
+        "Load full 40-question sample test? (Current data will be replaced)"
+      )
+    )
+      return;
+
+    setTestName(SAMPLE_TEST_DATA.testName);
+    setDifficulty(SAMPLE_TEST_DATA.difficulty);
+    setTimeLimit(SAMPLE_TEST_DATA.timeLimit);
+    setSections(SAMPLE_TEST_DATA.sections);
+    setExpandedSection(null); // hammasini yopamiz
+    alert("✅ Full sample test loaded! You can now edit and save it.");
+  };
+
   const addQuestionGroup = (sectionIdx: number) => {
     const section = sections[sectionIdx];
     if (section.totalQuestions >= 10) {
@@ -122,6 +420,7 @@ export const AddListeningTestModal: FC<{
       questions: Array(defaultCount)
         .fill(null)
         .map(() => ({
+          contextText: "",
           question: "",
           correctAnswer: "",
         })),
@@ -142,7 +441,6 @@ export const AddListeningTestModal: FC<{
     const group = updated[sectionIdx].questionGroups[groupIdx];
     group.type = type;
 
-    // Add options if MCQ/Matching
     const needsOptions = type === "multiple-choice" || type === "matching";
     group.questions = group.questions.map((q) => ({
       ...q,
@@ -171,12 +469,12 @@ export const AddListeningTestModal: FC<{
     group.count = newCount;
     updated[sectionIdx].totalQuestions = newTotal;
 
-    // Adjust questions array
     if (newCount > oldCount) {
       const needsOptions =
         group.type === "multiple-choice" || group.type === "matching";
       for (let i = 0; i < newCount - oldCount; i++) {
         group.questions.push({
+          contextText: "",
           question: "",
           correctAnswer: "",
           options: needsOptions ? ["", "", "", ""] : undefined,
@@ -193,11 +491,10 @@ export const AddListeningTestModal: FC<{
     sectionIdx: number,
     groupIdx: number,
     qIdx: number,
-    field: string,
-    value: any
+    field: "contextText" | "question" | "correctAnswer",
+    value: string
   ) => {
     const updated = [...sections];
-    // @ts-ignore
     updated[sectionIdx].questionGroups[groupIdx].questions[qIdx][field] = value;
     setSections(updated);
   };
@@ -293,10 +590,8 @@ export const AddListeningTestModal: FC<{
       return;
     }
 
-    // Validate
     for (let i = 0; i < sections.length; i++) {
       const section = sections[i];
-
       if (section.totalQuestions !== 10) {
         alert(
           `Section ${i + 1} must have exactly 10 questions! (Currently: ${
@@ -305,7 +600,6 @@ export const AddListeningTestModal: FC<{
         );
         return;
       }
-
       if (!section.audioUrl) {
         alert(`Section ${i + 1} needs audio file!`);
         return;
@@ -333,22 +627,19 @@ export const AddListeningTestModal: FC<{
           }
           if (
             (group.type === "multiple-choice" || group.type === "matching") &&
-            q.options
+            q.options?.some((opt) => !opt.trim())
           ) {
-            if (q.options.some((opt) => !opt.trim())) {
-              alert(
-                `Section ${i + 1}, Group ${j + 1}, Question ${
-                  k + 1
-                }: Fill all options!`
-              );
-              return;
-            }
+            alert(
+              `Section ${i + 1}, Group ${j + 1}, Question ${
+                k + 1
+              }: Fill all options!`
+            );
+            return;
           }
         }
       }
     }
 
-    // Format for backend
     const sectionsForSubmit = sections.map((section) => {
       let questionNumber = (section.sectionNumber - 1) * 10 + 1;
       const allQuestions: any[] = [];
@@ -358,6 +649,7 @@ export const AddListeningTestModal: FC<{
           allQuestions.push({
             questionNumber: questionNumber++,
             questionType: group.type,
+            contextText: q.contextText || "",
             question: q.question,
             options: q.options,
             correctAnswer: q.correctAnswer,
@@ -431,6 +723,17 @@ export const AddListeningTestModal: FC<{
         </div>
 
         <div className="p-8">
+          {/* Load Sample Button */}
+          <div className="flex justify-end mb-6">
+            <button
+              onClick={loadSampleTest}
+              className="px-8 py-4 bg-linear-to-r from-blue-600 to-cyan-600 text-white rounded-xl font-bold hover:from-blue-700 hover:to-cyan-700 shadow-lg flex items-center gap-3 text-lg"
+            >
+              <BookOpen className="w-6 h-6" />
+              Load Sample Test (40 questions)
+            </button>
+          </div>
+
           {/* Basic Info */}
           <div className="grid grid-cols-3 gap-6 mb-8">
             <input
@@ -487,7 +790,6 @@ export const AddListeningTestModal: FC<{
                     : "border-gray-300 bg-white"
                 }`}
               >
-                {/* Section Header */}
                 <div
                   className={`p-6 cursor-pointer ${
                     section.totalQuestions === 10
@@ -533,10 +835,8 @@ export const AddListeningTestModal: FC<{
                   </div>
                 </div>
 
-                {/* Section Content */}
                 {expandedSection === sectionIdx && (
                   <div className="p-6 bg-white space-y-6">
-                    {/* Section Info */}
                     <div className="grid grid-cols-2 gap-4">
                       <input
                         type="text"
@@ -581,7 +881,6 @@ export const AddListeningTestModal: FC<{
                       </div>
                     </div>
 
-                    {/* Question Groups */}
                     <div>
                       <div className="flex items-center justify-between mb-4">
                         <h4 className="text-lg font-black">
@@ -603,7 +902,6 @@ export const AddListeningTestModal: FC<{
                             key={group.id}
                             className="border-2 border-gray-300 rounded-lg overflow-hidden"
                           >
-                            {/* Group Header */}
                             <div
                               className="p-4 bg-gray-100 cursor-pointer flex items-center justify-between"
                               onClick={() =>
@@ -644,10 +942,8 @@ export const AddListeningTestModal: FC<{
                               </div>
                             </div>
 
-                            {/* Group Content */}
                             {expandedGroup === group.id && (
                               <div className="p-4 bg-white space-y-4">
-                                {/* Group Settings */}
                                 <div className="grid grid-cols-2 gap-4">
                                   <select
                                     value={group.type}
@@ -682,7 +978,6 @@ export const AddListeningTestModal: FC<{
                                   />
                                 </div>
 
-                                {/* Image Upload for Map/Diagram */}
                                 {group.type === "plan-map-diagram" && (
                                   <div>
                                     <input
@@ -731,31 +1026,66 @@ export const AddListeningTestModal: FC<{
                                   </div>
                                 )}
 
-                                {/* Questions */}
                                 <div className="space-y-3">
                                   {group.questions.map((q, qIdx) => (
                                     <div
                                       key={qIdx}
                                       className="p-4 bg-gray-50 border-2 border-gray-200 rounded-lg"
                                     >
-                                      <div className="font-bold mb-2">
+                                      <div className="font-bold mb-3 text-gray-900">
                                         Question {qIdx + 1}
                                       </div>
-                                      <input
-                                        type="text"
-                                        value={q.question}
-                                        onChange={(e) =>
-                                          updateQuestion(
-                                            sectionIdx,
-                                            groupIdx,
-                                            qIdx,
-                                            "question",
-                                            e.target.value
-                                          )
-                                        }
-                                        className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg mb-3"
-                                        placeholder="Question text *"
-                                      />
+
+                                      {/* Context Text */}
+                                      <div className="mb-3">
+                                        <label className="block text-xs font-semibold text-gray-600 mb-1">
+                                          Context Text (appears before question)
+                                        </label>
+                                        <textarea
+                                          value={q.contextText || ""}
+                                          onChange={(e) =>
+                                            updateQuestion(
+                                              sectionIdx,
+                                              groupIdx,
+                                              qIdx,
+                                              "contextText",
+                                              e.target.value
+                                            )
+                                          }
+                                          rows={3}
+                                          className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 font-mono text-xs"
+                                          placeholder="Example:\nThe speaker talks about dolphins using echolocation..."
+                                        />
+                                        <p className="text-xs text-gray-500 mt-1">
+                                          💡 Format preserved: line breaks,
+                                          bullets
+                                        </p>
+                                      </div>
+
+                                      {/* Question Text */}
+                                      <div className="mb-3">
+                                        <label className="block text-xs font-semibold text-gray-600 mb-1">
+                                          Question Text *
+                                        </label>
+                                        <textarea
+                                          value={q.question}
+                                          onChange={(e) =>
+                                            updateQuestion(
+                                              sectionIdx,
+                                              groupIdx,
+                                              qIdx,
+                                              "question",
+                                              e.target.value
+                                            )
+                                          }
+                                          rows={2}
+                                          className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg mb-1 focus:outline-none focus:border-purple-500"
+                                          placeholder="31. Dolphins use ________ to find food."
+                                        />
+                                        <p className="text-xs text-gray-500">
+                                          Use blanks like "31. ____"
+                                        </p>
+                                      </div>
 
                                       {(group.type === "multiple-choice" ||
                                         group.type === "matching") && (

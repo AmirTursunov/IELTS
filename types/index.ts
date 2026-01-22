@@ -23,6 +23,7 @@ export interface Question {
     | "matching"
     | "sentence-completion"
     | "short-answer";
+  contextText?: string;
   question: string;
   options?: string[];
   correctAnswer: string | string[];
@@ -63,6 +64,7 @@ export interface ListeningQuestion {
     | "summary-completion" // summary to‘ldirish
     | "plan-map-diagram" // xarita yoki diagramma belgilash
     | "sentence-completion"; // gap to‘ldirish
+  contextText?: string;
   question: string; // savol matni
   options?: string[]; // faqat kerak bo‘lganda variantlar
   correctAnswer: string; // to‘g‘ri javob har doim string

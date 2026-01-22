@@ -84,7 +84,7 @@ export const QuestionNotes: React.FC<QuestionNotesProps> = ({
         }`}
         title={hasNote ? "View/Edit note" : "Add note"}
       >
-        <StickyNote size={18} className={hasNote ? "fill-yellow-400" : ""} />
+        <StickyNote size={14} className={hasNote ? "fill-yellow-400" : ""} />
 
         {/* Note indicator dot */}
         {hasNote && (

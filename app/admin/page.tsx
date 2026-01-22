@@ -25,7 +25,6 @@ export default function IELTSAdminPanel(): React.ReactElement {
     totalListeningTests: 0,
     totalTests: 0,
   });
-
   useEffect(() => {
     if (activeSection === "dashboard") {
       fetchDashboardData();

@@ -15,6 +15,7 @@ export interface IListeningQuestion {
     | "summary-completion"
     | "sentence-completion"
     | "short-answer";
+  contextText?: string;
   question: string;
   options?: string[];
   correctAnswer: string | string[];
@@ -62,11 +63,13 @@ const ListeningQuestionSchema = new Schema<IListeningQuestion>({
     ],
     required: true,
   },
+
+  contextText: { type: String },
   question: { type: String, required: true },
   options: [String],
   correctAnswer: { type: Schema.Types.Mixed, required: true },
   points: { type: Number, default: 1 },
-  imageUrl: { type: String }, // ⬅️ BU QATORNI QO'SHING
+  imageUrl: { type: String },
 });
 
 // Section schema

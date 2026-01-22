@@ -35,6 +35,7 @@ export async function GET(
         questions: section.questions.map((q: any) => ({
           questionNumber: q.questionNumber,
           questionType: q.questionType,
+          contextText: q.contextText || "",
           question: q.question,
           options: q.options || [],
           correctAnswer: q.correctAnswer || "",

@@ -13,6 +13,7 @@ import {
   X,
   Play,
   RotateCcw,
+  Info,
 } from "lucide-react";
 
 const API_BASE = "/api";
@@ -40,12 +41,18 @@ export default function ReadingTestPage() {
 
   const [leftWidth, setLeftWidth] = useState(50);
   const [isDragging, setIsDragging] = useState(false);
+  const [infoModal, setInfoModal] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const passageContainerRef = useRef<HTMLDivElement>(null);
 
-  const [highlights, setHighlights] = useState<
-    { start: number; end: number; color: string; note?: string }[]
-  >([]);
+  const [highlights, setHighlights] = useState<{
+    [passageNumber: number]: {
+      start: number;
+      end: number;
+      color: string;
+      note?: string;
+    }[];
+  }>({});
 
   const [sel, setSel] = useState<{
     text: string;
@@ -58,6 +65,7 @@ export default function ReadingTestPage() {
   const [noteModal, setNoteModal] = useState(false);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [noteText, setNoteText] = useState("");
+  const [showNotesSidebar, setShowNotesSidebar] = useState(false);
 
   // Text selection - faqat passage ichida
   useEffect(() => {
@@ -392,7 +400,7 @@ export default function ReadingTestPage() {
     };
 
     return (
-      <div className="bg-linear-to-r from-cyan-50 to-blue-50 border-l-4 border-cyan-500 p-3 rounded-r-lg mb-4 shadow-sm">
+      <div className="bg-linear-to-r from-purple-50 to-purple-50 border-l-4 border-purple-500 p-3 rounded-r-lg mb-4 shadow-sm">
         <p className="font-bold text-gray-900 mb-1.5 text-sm">
           {instruction.title}
         </p>
@@ -405,9 +413,9 @@ export default function ReadingTestPage() {
 
   if (loading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-cyan-50">
+      <div className="h-screen flex items-center justify-center bg-linear-to-br from-purple-50 to-purple-100">
         <div className="text-center">
-          <Loader2 className="animate-spin h-16 w-16 text-cyan-600 mx-auto mb-4" />
+          <Loader2 className="animate-spin h-16 w-16 text-purple-600 mx-auto mb-4" />
           <p className="text-gray-600 font-medium">Loading test...</p>
         </div>
       </div>
@@ -416,17 +424,17 @@ export default function ReadingTestPage() {
 
   if (error) {
     return (
-      <div className="h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-cyan-50">
+      <div className="h-screen flex items-center justify-center bg-linear-to-br from-purple-50 to-purple-100">
         <div className="text-center max-w-md">
           <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl mb-4">
             <p className="font-semibold mb-2">Error</p>
             <p>{error}</p>
           </div>
           <button
-            onClick={() => router.push("/")}
+            onClick={() => router.push("/reading")}
             className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
           >
-            Back to Home
+            Back to Tests
           </button>
         </div>
       </div>
@@ -435,12 +443,12 @@ export default function ReadingTestPage() {
 
   if (!test || !test.passages || test.passages.length === 0) {
     return (
-      <div className="h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-cyan-50">
+      <div className="h-screen flex items-center justify-center bg-linear-to-br from-purple-50 to-purple-100">
         <div className="text-center">
           <p className="text-gray-600 mb-4">Test not found</p>
           <button
             onClick={() => router.push("/")}
-            className="px-6 py-3 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700"
+            className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
           >
             Back to Home
           </button>
@@ -452,11 +460,11 @@ export default function ReadingTestPage() {
   // Start Screen
   if (!testStarted) {
     return (
-      <div className="h-screen flex items-center justify-center bg-linear-to-br from-blue-50 via-cyan-50 to-teal-50">
+      <div className="h-screen flex items-center justify-center bg-linear-to-br from-purple-50 via-purple-100 to-purple-200">
         <div className="max-w-3xl mx-auto px-6">
-          <div className="bg-white rounded-2xl shadow-2xl p-10 border border-cyan-100">
+          <div className="bg-white rounded-2xl shadow-2xl p-10 border border-purple-100">
             <div className="text-center mb-8">
-              <div className="bg-linear-to-r from-cyan-500 to-blue-600 text-white px-8 py-4 rounded-xl font-bold text-3xl inline-block mb-6 shadow-lg">
+              <div className="bg-linear-to-r from-purple-500 to-purple-600 text-white px-8 py-4 rounded-xl font-bold text-3xl inline-block mb-6 shadow-lg">
                 IELTS READING
               </div>
               <h1 className="text-4xl font-bold text-gray-800 mb-3">
@@ -466,16 +474,16 @@ export default function ReadingTestPage() {
             </div>
 
             <div className="grid grid-cols-3 gap-4 mb-8">
-              <div className="bg-linear-to-br from-cyan-50 to-blue-50 p-6 rounded-xl text-center border border-cyan-200">
-                <div className="text-3xl font-bold text-cyan-600 mb-2">
+              <div className="bg-linear-to-br from-purple-50 to-purple-50 p-6 rounded-xl text-center border border-purple-200">
+                <div className="text-3xl font-bold text-purple-600 mb-2">
                   {test.passages.length}
                 </div>
                 <div className="text-gray-600 font-medium text-sm">
                   Passages
                 </div>
               </div>
-              <div className="bg-linear-to-br from-blue-50 to-indigo-50 p-6 rounded-xl text-center border border-blue-200">
-                <div className="text-3xl font-bold text-blue-600 mb-2">
+              <div className="bg-linear-to-br from-purple-50 to-purple-100 p-6 rounded-xl text-center border border-purple-200">
+                <div className="text-3xl font-bold text-purple-600 mb-2">
                   {test.timeLimit}
                 </div>
                 <div className="text-gray-600 font-medium text-sm">Minutes</div>
@@ -496,30 +504,30 @@ export default function ReadingTestPage() {
               </div>
             </div>
 
-            <div className="bg-linear-to-r from-cyan-50 to-blue-50 border-l-4 border-cyan-500 rounded-r-xl p-5 mb-8">
-              <h3 className="font-bold text-cyan-900 mb-3 flex items-center gap-2">
-                <span className="bg-cyan-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs">
+            <div className="bg-linear-to-r from-purple-50 to-purple-50 border-l-4 border-purple-500 rounded-r-xl p-5 mb-8">
+              <h3 className="font-bold text-purple-900 mb-3 flex items-center gap-2">
+                <span className="bg-purple-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs">
                   i
                 </span>
                 Test Instructions
               </h3>
-              <ul className="text-sm text-cyan-800 space-y-2">
+              <ul className="text-sm text-purple-800 space-y-2">
                 <li className="flex items-start gap-2">
-                  <span className="text-cyan-500 mt-0.5">•</span>
+                  <span className="text-purple-500 mt-0.5">•</span>
                   <span>
                     Read each passage carefully before answering questions
                   </span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-cyan-500 mt-0.5">•</span>
+                  <span className="text-purple-500 mt-0.5">•</span>
                   <span>Click the flag icon to mark questions for review</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-cyan-500 mt-0.5">•</span>
+                  <span className="text-purple-500 mt-0.5">•</span>
                   <span>Use navigation buttons to move between passages</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-cyan-500 mt-0.5">•</span>
+                  <span className="text-purple-500 mt-0.5">•</span>
                   <span>
                     Timer will start when you click &quot;Start Test&quot;
                   </span>
@@ -529,7 +537,7 @@ export default function ReadingTestPage() {
 
             <button
               onClick={() => setTestStarted(true)}
-              className="w-full bg-linear-to-r from-cyan-500 to-blue-600 text-white py-5 rounded-xl font-bold text-xl hover:from-cyan-600 hover:to-blue-700 transition-all shadow-lg flex items-center justify-center gap-3"
+              className="w-full bg-linear-to-r from-purple-500 to-purple-600 text-white py-5 rounded-xl font-bold text-xl hover:from-purple-600 hover:to-purple-700 transition-all shadow-lg flex items-center justify-center gap-3"
             >
               <Play size={24} />
               Start Test
@@ -543,12 +551,12 @@ export default function ReadingTestPage() {
   // Result Page
   if (showResult && result) {
     return (
-      <div className="min-h-screen bg-linear-to-br from-blue-50 via-cyan-50 to-teal-50 py-12">
+      <div className="min-h-screen bg-linear-to-br from-purple-50 via-purple-100 to-purple-200 py-12">
         <div className="max-w-6xl mx-auto px-6">
-          <div className="bg-white rounded-2xl shadow-2xl overflow-hidden border border-cyan-100">
-            <div className="bg-linear-to-r from-cyan-500 via-blue-600 to-indigo-600 p-10 text-white">
+          <div className="bg-white rounded-2xl shadow-2xl overflow-hidden border border-purple-100">
+            <div className="bg-linear-to-r from-purple-500 via-purple-600 to-indigo-600 p-10 text-white">
               <h1 className="text-4xl font-bold mb-3">Test Completed!</h1>
-              <p className="text-cyan-100 text-lg">
+              <p className="text-purple-100 text-lg">
                 IELTS Reading Test - {test.title}
               </p>
             </div>
@@ -556,11 +564,11 @@ export default function ReadingTestPage() {
             <div className="p-10 border-b border-gray-200">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                 <div className="text-center transform hover:scale-105 transition-transform">
-                  <div className="bg-linear-to-br from-cyan-500 to-blue-600 text-white rounded-2xl p-6 shadow-lg">
+                  <div className="bg-linear-to-br from-purple-500 to-purple-600 text-white rounded-2xl p-6 shadow-lg">
                     <div className="text-6xl font-bold mb-2">
                       {result.score}
                     </div>
-                    <p className="font-semibold text-cyan-100">Band Score</p>
+                    <p className="font-semibold text-purple-100">Band Score</p>
                   </div>
                 </div>
                 <div className="text-center transform hover:scale-105 transition-transform">
@@ -589,8 +597,8 @@ export default function ReadingTestPage() {
                 </div>
               </div>
               <div className="mt-8 text-center">
-                <div className="inline-flex items-center gap-2 bg-linear-to-r from-cyan-50 to-blue-50 px-6 py-3 rounded-full border border-cyan-200">
-                  <Clock size={20} className="text-cyan-600" />
+                <div className="inline-flex items-center gap-2 bg-linear-to-r from-purple-50 to-purple-50 px-6 py-3 rounded-full border border-purple-200">
+                  <Clock size={20} className="text-purple-600" />
                   <span className="text-gray-700 font-medium">
                     Time: {formatTime(result.timeTaken)} /{" "}
                     {formatTime(test.timeLimit * 60)}
@@ -601,7 +609,7 @@ export default function ReadingTestPage() {
 
             <div className="p-10">
               <h2 className="text-3xl font-bold mb-8 text-gray-800 flex items-center gap-3">
-                <div className="w-2 h-8 bg-linear-to-b from-cyan-500 to-blue-600 rounded-full"></div>
+                <div className="w-2 h-8 bg-linear-to-b from-purple-500 to-purple-600 rounded-full"></div>
                 Answer Review
               </h2>
               <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
@@ -677,7 +685,7 @@ export default function ReadingTestPage() {
               </button>
               <button
                 onClick={() => window.location.reload()}
-                className="px-10 py-4 bg-linear-to-r from-cyan-500 to-blue-600 text-white rounded-xl hover:from-cyan-600 hover:to-blue-700 font-semibold shadow-lg transition-all flex items-center gap-2"
+                className="px-10 py-4 bg-linear-to-r from-purple-500 to-purple-600 text-white rounded-xl hover:from-purple-600 hover:to-purple-700 font-semibold shadow-lg transition-all flex items-center gap-2"
               >
                 <RotateCcw size={20} />
                 Retake Test
@@ -690,15 +698,33 @@ export default function ReadingTestPage() {
   }
 
   const HIGHLIGHT_COLORS = [
-    { name: "yellow", bg: "bg-yellow-300", hover: "hover:bg-yellow-400" },
-    { name: "cyan", bg: "bg-cyan-300", hover: "hover:bg-cyan-400" },
-    { name: "fuchsia", bg: "bg-fuchsia-300", hover: "hover:bg-fuchsia-400" },
+    {
+      name: "yellow",
+      bg: "bg-yellow-300",
+      hover: "hover:bg-yellow-400",
+      border: "border-yellow-400",
+    },
+    {
+      name: "purple",
+      bg: "bg-purple-300",
+      hover: "hover:bg-purple-400",
+      border: "border-purple-400",
+    },
+    {
+      name: "fuchsia",
+      bg: "bg-fuchsia-300",
+      hover: "hover:bg-fuchsia-400",
+      border: "border-fuchsia-400",
+    },
   ];
 
   const renderHighlighted = () => {
+    const passageNumber = currentPassage.passageNumber;
+    const passageHighlights = highlights[passageNumber] || [];
+
     let last = 0;
     const nodes: JSX.Element[] = [];
-    const sorted = [...highlights].sort((a, b) => a.start - b.start);
+    const sorted = [...passageHighlights].sort((a, b) => a.start - b.start);
 
     sorted.forEach((h, i) => {
       const before = currentPassage.content.slice(last, h.start);
@@ -739,8 +765,8 @@ export default function ReadingTestPage() {
     <div className="h-screen flex flex-col bg-linear-to-br from-gray-50 to-slate-50">
       {/* Submit Modal */}
       {showSubmitModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl border border-cyan-100">
+        <div className="fixed inset-0 bg-opacity-60 flex items-center justify-center z-50 p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl border border-purple-100">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-bold text-gray-800">Submit Test?</h3>
               <button
@@ -780,7 +806,7 @@ export default function ReadingTestPage() {
               </button>
               <button
                 onClick={handleSubmit}
-                className="flex-1 px-6 py-4 bg-linear-to-r from-cyan-500 to-blue-600 text-white rounded-xl hover:from-cyan-600 hover:to-blue-700 font-semibold shadow-lg transition-all"
+                className="flex-1 px-6 py-4 bg-linear-to-r from-purple-500 to-purple-600 text-white rounded-xl hover:from-purple-600 hover:to-purple-700 font-semibold shadow-lg transition-all"
               >
                 Submit
               </button>
@@ -789,9 +815,9 @@ export default function ReadingTestPage() {
         </div>
       )}
 
-      {/* Note Modal - Yaxshilangan */}
+      {/* Note Modal */}
       {noteModal && activeIndex !== null && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0  bg-opacity-50 bg-black/50 backdrop-blur-md flex items-center justify-center z-50">
           <div className="bg-white rounded-xl shadow-2xl p-6 w-96 border border-gray-200">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-gray-800">Add Note</h3>
@@ -806,7 +832,7 @@ export default function ReadingTestPage() {
               </button>
             </div>
             <textarea
-              className="w-full border-2 border-gray-300 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+              className="w-full border-2 border-gray-300 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
               rows={4}
               placeholder="Write your note here..."
               value={noteText}
@@ -826,14 +852,20 @@ export default function ReadingTestPage() {
               <button
                 onClick={() => {
                   if (activeIndex !== null) {
-                    const copy = [...highlights];
-                    copy[activeIndex].note = noteText;
-                    setHighlights(copy);
+                    const passageNum = currentPassage.passageNumber;
+                    const passageHighlights = [
+                      ...(highlights[passageNum] || []),
+                    ];
+                    passageHighlights[activeIndex].note = noteText;
+                    setHighlights((prev) => ({
+                      ...prev,
+                      [passageNum]: passageHighlights,
+                    }));
                   }
                   setNoteModal(false);
                   setActiveIndex(null);
                 }}
-                className="px-4 py-2 text-sm bg-cyan-500 text-white rounded-lg hover:bg-cyan-600 font-semibold shadow transition"
+                className="px-4 py-2 text-sm bg-purple-500 text-white rounded-lg hover:bg-purple-600 font-semibold shadow transition"
               >
                 Save Note
               </button>
@@ -841,21 +873,60 @@ export default function ReadingTestPage() {
           </div>
         </div>
       )}
+      {/* Info Modal */}
+      {infoModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white max-w-md w-full rounded-2xl shadow-2xl p-6 relative">
+            {/* Close */}
+            <button
+              onClick={() => setInfoModal(false)}
+              className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
+            >
+              ✕
+            </button>
 
+            {/* Title */}
+            <h2 className="text-xl font-bold text-gray-800 mb-3">
+              How to use Highlight & Notes
+            </h2>
+
+            {/* Content */}
+            <ul className="space-y-2 text-sm text-gray-600 leading-relaxed">
+              <li>• Select any part of the passage text using your mouse.</li>
+              <li>
+                • Click <b>Highlight (colors)</b> to mark important information.
+              </li>
+              <li>
+                • Add a <b>Note (+)</b> to save keywords or ideas.
+              </li>
+              <li>• Highlights help you locate answers faster.</li>
+              <li>
+                • Notes help you remember key points while answering questions.
+              </li>
+            </ul>
+
+            {/* Tip */}
+            <div className="mt-4 p-3 bg-purple-50 text-purple-700 text-xs rounded-lg">
+              💡 Tip: Avoid highlighting too much. Focus on keywords, names, and
+              dates.
+            </div>
+          </div>
+        </div>
+      )}
       {/* Header - Compact */}
-      <header className="bg-linear-to-r from-cyan-600 to-blue-700 shadow-lg shrink-0">
+      <header className="bg-[#9C74FF] shadow-lg shrink-0">
         <div className="max-w-full mx-auto px-6 py-2.5 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
               onClick={() => router.push("/reading")}
-              className="flex items-center gap-1.5 text-white hover:text-cyan-100 transition-colors bg-white/10 px-3 py-1.5 rounded-lg text-sm"
+              className="flex items-center gap-1.5 text-white hover:text-purple-100 transition-colors bg-white/10 px-3 py-1.5 rounded-lg text-sm"
             >
               <ChevronLeft size={16} />
               <span className="font-medium">Exit</span>
             </button>
             <div className="h-6 w-px bg-white/20"></div>
             <div className="flex items-center gap-2">
-              <div className="bg-white text-cyan-600 px-3 py-1 rounded-md font-bold text-sm shadow-md">
+              <div className="bg-white text-[#9C74FF] px-3 py-1 rounded-md font-bold text-sm shadow-md">
                 IELTS
               </div>
               <span className="text-white font-semibold text-sm">
@@ -872,8 +943,18 @@ export default function ReadingTestPage() {
               </span>
             </div>
             <button
+              onClick={() => setShowNotesSidebar(!showNotesSidebar)}
+              className={`px-4 py-1.5 rounded-lg font-bold text-sm transition-all shadow-lg ${
+                showNotesSidebar
+                  ? "bg-[#9C74FF] text-white"
+                  : "bg-white/10 text-white hover:bg-white/20"
+              }`}
+            >
+              📝 Notes
+            </button>
+            <button
               onClick={() => setShowSubmitModal(true)}
-              className="bg-white text-cyan-600 px-5 py-1.5 rounded-lg font-bold text-sm hover:bg-cyan-50 transition-all shadow-lg"
+              className="bg-white text-[#9C74FF] px-5 py-1.5 rounded-lg font-bold text-sm hover:bg-[#6931f7] transition-all shadow-lg"
             >
               Submit Test
             </button>
@@ -882,16 +963,27 @@ export default function ReadingTestPage() {
       </header>
 
       {/* Part Info Banner - Compact */}
-      <div className="bg-linear-to-r from-cyan-500 to-blue-600 shrink-0 shadow-sm">
-        <div className="max-w-full mx-auto px-6 py-2 text-white">
-          <h2 className="text-base font-bold">
-            READING PASSAGE {currentPart + 1}
-          </h2>
-          <p className="text-cyan-100 text-xs italic">
-            You should spend about 20 minutes on Questions {startNumber}-
-            {endNumber}, which are based on Reading Passage {currentPart + 1}{" "}
-            below.
-          </p>
+      <div className="bg-[#9C74FF] border-t border-amber-50 shrink-0 shadow-sm">
+        <div className="max-w-full mx-auto px-6 py-2 text-white flex items-center justify-between">
+          {/* Chap tomondagi text */}
+          <div>
+            <h2 className="text-base font-bold">
+              READING PASSAGE {currentPart + 1}
+            </h2>
+            <p className="text-purple-100 text-xs italic">
+              You should spend about 20 minutes on Questions {startNumber}-
+              {endNumber}, which are based on Reading Passage {currentPart + 1}{" "}
+              below.
+            </p>
+          </div>
+
+          {/* O'ng tomondagi info button */}
+          <button
+            onClick={() => setInfoModal(true)}
+            className="shrink-0 p-2 rounded-full hover:bg-white/20 transition"
+          >
+            <Info />
+          </button>
         </div>
       </div>
 
@@ -900,10 +992,10 @@ export default function ReadingTestPage() {
         <div ref={containerRef} className="h-full flex p-6 gap-0">
           {/* Passage */}
           <div
-            className="bg-white rounded-l-2xl shadow-xl flex flex-col overflow-hidden border-2 border-r-0 border-cyan-100"
+            className="bg-white rounded-l-2xl shadow-xl flex flex-col overflow-hidden border-2 border-r-0 border-purple-100"
             style={{ width: `${leftWidth}%` }}
           >
-            <div className="px-8 py-6 border-b-2 border-cyan-100 shrink-0 bg-linear-to-r from-white to-cyan-50">
+            <div className="px-8 py-6 border-b-2 border-purple-100 shrink-0 bg-linear-to-r from-white to-purple-50">
               <h3 className="text-2xl font-bold text-gray-900">
                 {currentPassage.title}
               </h3>
@@ -942,10 +1034,14 @@ export default function ReadingTestPage() {
                     <button
                       key={c.name}
                       onClick={() => {
-                        setHighlights((h) => [
-                          ...h,
-                          { start: sel.start, end: sel.end, color: c.name },
-                        ]);
+                        const passageNum = currentPassage.passageNumber;
+                        setHighlights((prev) => ({
+                          ...prev,
+                          [passageNum]: [
+                            ...(prev[passageNum] || []),
+                            { start: sel.start, end: sel.end, color: c.name },
+                          ],
+                        }));
                         setSel(null);
                         window.getSelection()?.removeAllRanges();
                       }}
@@ -959,16 +1055,22 @@ export default function ReadingTestPage() {
                   {/* PLUS btn - note qo'shish */}
                   <button
                     onClick={() => {
-                      setHighlights((h) => [
-                        ...h,
-                        {
-                          start: sel.start,
-                          end: sel.end,
-                          color: "yellow",
-                          note: "",
-                        },
-                      ]);
-                      setActiveIndex(highlights.length);
+                      const passageNum = currentPassage.passageNumber;
+                      const currentPassageHighlights =
+                        highlights[passageNum] || [];
+                      setHighlights((prev) => ({
+                        ...prev,
+                        [passageNum]: [
+                          ...currentPassageHighlights,
+                          {
+                            start: sel.start,
+                            end: sel.end,
+                            color: "yellow",
+                            note: "",
+                          },
+                        ],
+                      }));
+                      setActiveIndex(currentPassageHighlights.length);
                       setNoteText("");
                       setSel(null);
                       window.getSelection()?.removeAllRanges();
@@ -987,8 +1089,8 @@ export default function ReadingTestPage() {
           {/* Resizer */}
           <div
             onMouseDown={handleMouseDown}
-            className={`w-3 bg-linear-to-b from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600 cursor-col-resize flex items-center justify-center transition-all shadow-lg ${
-              isDragging ? "from-cyan-500 to-blue-600" : ""
+            className={`w-3 bg-[#9C74FF] hover:from-purple-500 hover:to-purple-600 cursor-col-resize flex items-center justify-center transition-all shadow-lg ${
+              isDragging ? "from-purple-500 to-purple-600" : ""
             }`}
           >
             <GripVertical size={18} className="text-white drop-shadow-md" />
@@ -996,10 +1098,10 @@ export default function ReadingTestPage() {
 
           {/* Questions */}
           <div
-            className="bg-white rounded-r-2xl shadow-xl flex flex-col overflow-hidden border-2 border-l-0 border-cyan-100"
+            className="bg-white rounded-r-2xl shadow-xl flex flex-col overflow-hidden border-2 border-l-0 border-purple-100"
             style={{ width: `${100 - leftWidth}%` }}
           >
-            <div className="px-8 py-6 border-b-2 border-cyan-100 shrink-0 bg-linear-to-r from-cyan-50 to-white">
+            <div className="px-8 py-6 border-b-2 border-purple-100 shrink-0 bg-linear-to-r from-purple-50 to-white">
               <h3 className="text-2xl font-bold text-gray-900">Questions</h3>
             </div>
             <div className="flex-1 overflow-y-auto px-8 py-6">
@@ -1044,9 +1146,82 @@ export default function ReadingTestPage() {
                           </div>
 
                           <div className="flex-1">
-                            <p className="text-gray-800 mb-4 leading-relaxed">
-                              {question.question}
-                            </p>
+                            {/* Dynamic input placement for text-based questions */}
+                            {question.questionType === "sentence-completion" ||
+                            question.questionType === "short-answer" ? (
+                              (() => {
+                                const questionText = question.question;
+                                // Match 2 or more consecutive underscores
+                                const underscorePattern = /_{2,}/g;
+                                const hasUnderscore =
+                                  underscorePattern.test(questionText);
+
+                                if (hasUnderscore) {
+                                  // Split by underscores and insert input
+                                  const parts =
+                                    questionText.split(underscorePattern);
+
+                                  return (
+                                    <div className="flex items-center gap-2 mb-4 flex-wrap">
+                                      {parts.map((part: any, idx: any) => (
+                                        <React.Fragment key={idx}>
+                                          {part && (
+                                            <span className="text-gray-800 leading-relaxed">
+                                              {part}
+                                            </span>
+                                          )}
+                                          {idx < parts.length - 1 && (
+                                            <input
+                                              type="text"
+                                              className="flex-1 border rounded mb-2 min-w-[100px] max-w-xs px-3 py-1.5 border-b-2 border-gray-300 focus:outline-none focus:border-[#9C74FF] text-gray-800 font-medium text-sm bg-transparent transition-colors"
+                                              placeholder="Your answer"
+                                              value={
+                                                answers[
+                                                  question.questionNumber
+                                                ] || ""
+                                              }
+                                              onChange={(e) =>
+                                                handleAnswerChange(
+                                                  question.questionNumber,
+                                                  e.target.value
+                                                )
+                                              }
+                                            />
+                                          )}
+                                        </React.Fragment>
+                                      ))}
+                                    </div>
+                                  );
+                                } else {
+                                  // No underscores - put input at the end
+                                  return (
+                                    <div className="flex items-center gap-3 mb-4">
+                                      <p className="text-gray-800 leading-relaxed shrink-0">
+                                        {questionText}
+                                      </p>
+                                      <input
+                                        type="text"
+                                        className="flex-1 border rounded mb-2 min-w-[200px] max-w-xs px-3 py-1.5 border-b-2 border-gray-300 focus:outline-none focus:border-[#9C74FF] text-gray-800 font-medium text-sm bg-transparent transition-colors"
+                                        placeholder="Your answer"
+                                        value={
+                                          answers[question.questionNumber] || ""
+                                        }
+                                        onChange={(e) =>
+                                          handleAnswerChange(
+                                            question.questionNumber,
+                                            e.target.value
+                                          )
+                                        }
+                                      />
+                                    </div>
+                                  );
+                                }
+                              })()
+                            ) : (
+                              <p className="text-gray-800 mb-4 leading-relaxed">
+                                {question.question}
+                              </p>
+                            )}
 
                             {question.questionType === "multiple-choice" &&
                               question.options && (
@@ -1058,8 +1233,8 @@ export default function ReadingTestPage() {
                                         className={`flex items-center gap-4 p-4 border-2 rounded-xl cursor-pointer transition-all ${
                                           answers[question.questionNumber] ===
                                           option
-                                            ? "bg-cyan-50 border-cyan-400 shadow-md"
-                                            : "border-gray-200 hover:border-cyan-300 hover:bg-cyan-50/30"
+                                            ? "bg-purple-50 border-purple-400 shadow-md"
+                                            : "border-gray-200 hover:border-purple-300 hover:bg-purple-50/30"
                                         }`}
                                       >
                                         <input
@@ -1076,7 +1251,7 @@ export default function ReadingTestPage() {
                                               e.target.value
                                             )
                                           }
-                                          className="w-5 h-5 text-cyan-600 focus:ring-2 focus:ring-cyan-500"
+                                          className="w-5 h-5 text-purple-600 focus:ring-2 focus:ring-purple-500"
                                         />
                                         <span className="text-gray-800 font-medium">
                                           {option}
@@ -1094,11 +1269,11 @@ export default function ReadingTestPage() {
                                   (option) => (
                                     <label
                                       key={option}
-                                      className={`flex items-center gap-4 p-4 border-2 rounded-xl cursor-pointer transition-all ${
+                                      className={`flex items-center gap-4 p-2 border-2 rounded-xl cursor-pointer transition-all ${
                                         answers[question.questionNumber] ===
                                         option
-                                          ? "bg-cyan-50 border-cyan-400 shadow-md"
-                                          : "border-gray-200 hover:border-cyan-300 hover:bg-cyan-50/30"
+                                          ? "bg-purple-50 border-purple-400 shadow-md"
+                                          : "border-gray-200 hover:border-purple-300 hover:bg-purple-50/30"
                                       }`}
                                     >
                                       <input
@@ -1115,7 +1290,7 @@ export default function ReadingTestPage() {
                                             e.target.value
                                           )
                                         }
-                                        className="w-5 h-5 text-cyan-600 focus:ring-2 focus:ring-cyan-500"
+                                        className="w-3 h-3 text-purple-600 focus:ring-2 focus:ring-purple-500"
                                       />
                                       <span className="text-gray-800 font-semibold">
                                         {option}
@@ -1129,7 +1304,7 @@ export default function ReadingTestPage() {
                             {question.questionType === "matching" &&
                               question.options && (
                                 <select
-                                  className="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 text-gray-800 font-medium bg-white"
+                                  className="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-800 font-medium bg-white"
                                   value={answers[question.questionNumber] || ""}
                                   onChange={(e) =>
                                     handleAnswerChange(
@@ -1151,26 +1326,7 @@ export default function ReadingTestPage() {
                                 </select>
                               )}
 
-                            {(question.questionType === "sentence-completion" ||
-                              question.questionType === "short-answer") && (
-                              <input
-                                type="text"
-                                className="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 text-gray-800 font-medium"
-                                placeholder={
-                                  question.questionType ===
-                                  "sentence-completion"
-                                    ? "Write ONE WORD ONLY"
-                                    : "Write NO MORE THAN THREE WORDS"
-                                }
-                                value={answers[question.questionNumber] || ""}
-                                onChange={(e) =>
-                                  handleAnswerChange(
-                                    question.questionNumber,
-                                    e.target.value
-                                  )
-                                }
-                              />
-                            )}
+                            {/* Other question types keep their original rendering */}
                           </div>
                         </div>
                       </div>
@@ -1183,8 +1339,88 @@ export default function ReadingTestPage() {
         </div>
       </div>
 
+      {/* Notes Sidebar */}
+      {showNotesSidebar && (
+        <div className="fixed top-0 right-0 h-full w-96 bg-white shadow-2xl border-l-2 border-purple-200 z-40 flex flex-col">
+          {/* Sidebar Header */}
+          <div className="bg-linear-to-r from-purple-500 to-purple-600 px-6 py-4 flex items-center justify-between">
+            <h3 className="text-xl font-bold text-white flex items-center gap-2">
+              📝 My Notes
+            </h3>
+            <button
+              onClick={() => setShowNotesSidebar(false)}
+              className="text-white hover:bg-white/20 p-2 rounded-lg transition"
+            >
+              <X size={20} />
+            </button>
+          </div>
+
+          {/* Notes Content */}
+          <div className="flex-1 overflow-y-auto p-6">
+            {Object.entries(highlights).map(
+              ([passageNum, passageHighlights]) => {
+                const notesInPassage = passageHighlights.filter((h) => h.note);
+                if (notesInPassage.length === 0) return null;
+
+                return (
+                  <div key={passageNum} className="mb-6">
+                    <h4 className="font-bold text-gray-800 mb-3 pb-2 border-b-2 border-purple-200">
+                      Passage {passageNum}
+                    </h4>
+                    <div className="space-y-3">
+                      {notesInPassage.map((highlight, idx) => {
+                        const passage = test.passages.find(
+                          (p: any) => p.passageNumber === parseInt(passageNum)
+                        );
+                        const highlightedText = passage
+                          ? passage.content.slice(
+                              highlight.start,
+                              highlight.end
+                            )
+                          : "";
+                        const color = HIGHLIGHT_COLORS.find(
+                          (c) => c.name === highlight.color
+                        );
+
+                        return (
+                          <div
+                            key={idx}
+                            className={`p-4 rounded-lg border-2 ${
+                              color?.border || "border-gray-200"
+                            } ${color?.bg || "bg-gray-50"}`}
+                          >
+                            <div className="text-sm text-gray-600 mb-2 font-medium line-clamp-2">
+                              "{highlightedText}"
+                            </div>
+                            <div className="text-sm text-gray-800 bg-white p-2 rounded border border-gray-200">
+                              {highlight.note}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              }
+            )}
+
+            {Object.values(highlights).every(
+              (h) => h.filter((item) => item.note).length === 0
+            ) && (
+              <div className="text-center py-12">
+                <div className="text-6xl mb-4">📝</div>
+                <p className="text-gray-500 font-medium">No notes yet</p>
+                <p className="text-gray-400 text-sm mt-2">
+                  Select text and click + to add notes
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Navigation Footer - Compact */}
-      <div className="bg-white border-t-2 border-cyan-100 shrink-0 shadow-lg">
+      <div className="bg-white border-t-2 border-purple-100 shrink-0 shadow-lg">
         <div className="max-w-full mx-auto px-6 py-2.5">
           <div className="flex items-center justify-between">
             <div className="flex gap-2">
@@ -1194,7 +1430,7 @@ export default function ReadingTestPage() {
                   onClick={() => router.push(`/reading/${testId}?part=${idx}`)}
                   className={`px-4 py-1.5 rounded-lg font-bold text-sm transition-all transform hover:scale-105 ${
                     idx === currentPart
-                      ? "bg-linear-to-r from-cyan-500 to-blue-600 text-white shadow-md"
+                      ? "bg-linear-to-r from-purple-500 to-purple-600 text-white shadow-md"
                       : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"
                   }`}
                 >
@@ -1214,7 +1450,7 @@ export default function ReadingTestPage() {
               <button
                 onClick={goToNextPart}
                 disabled={currentPart === test.passages.length - 1}
-                className="px-6 py-1.5 bg-linear-to-r from-cyan-500 to-blue-600 text-white rounded-lg text-sm hover:from-cyan-600 hover:to-blue-700 disabled:opacity-30 disabled:cursor-not-allowed font-semibold shadow-md transition-all"
+                className="px-6 py-1.5 bg-linear-to-r from-purple-500 to-purple-600 text-white rounded-lg text-sm hover:from-purple-600 hover:to-purple-700 disabled:opacity-30 disabled:cursor-not-allowed font-semibold shadow-md transition-all"
               >
                 Next →
               </button>

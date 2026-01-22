@@ -1,5 +1,5 @@
 "use client";
-import React, { FC, useState } from "react";
+import React, { FC, useEffect, useState } from "react";
 import { Search } from "lucide-react";
 
 interface AppUser {
@@ -9,10 +9,72 @@ interface AppUser {
   tests: number;
   score: number;
 }
-
+type TestType = "reading" | "listening" | "speaking" | "writing";
+interface PerformanceByType {
+  reading: number;
+  listening: number;
+  speaking: number;
+  writing: number;
+}
+interface StatsResponse {
+  success: boolean;
+  data?: {
+    stats: {
+      totalTests: number;
+      averageBand: number;
+      studyStreak: number;
+      hoursStudied: number;
+    };
+    recentTests: {
+      id: string;
+      type: TestType;
+      score: number;
+      bandScore: number;
+      date: string | Date;
+    }[];
+    performanceByType: PerformanceByType;
+    user: {
+      name: string;
+      email: string;
+      avatar?: string;
+      role: string;
+      joinedAt: Date;
+    };
+  };
+  error?: string;
+}
 export const UsersContent: FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>("");
-
+  const [users, setUsers] = useState<StatsResponse[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [test, setTest] = useState<any>(null);
+  const [timeRemaining, setTimeRemaining] = useState<number>(0);
+  useEffect(() => {
+    loadUser();
+  }, []);
+  const loadUser = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetch(`/api/user/stats`);
+      const result = await response.json();
+      if (result.success) {
+        setUsers(result.data);
+        setTimeRemaining(
+          result.data.timeLimit ? result.data.timeLimit * 60 : 1800
+        );
+        console.log("Loaded user:", result.data);
+      } else {
+        setError(result.error || "Failed to load user");
+      }
+    } catch (error: any) {
+      console.error("Error loading user:", error);
+      setError("Network error occurred");
+    } finally {
+      setLoading(false);
+    }
+  };
   const mockUsers: AppUser[] = [
     {
       id: 1,
