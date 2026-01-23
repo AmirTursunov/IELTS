@@ -19,6 +19,7 @@ export interface IListeningQuestion {
   question: string;
   options?: string[];
   correctAnswer: string | string[];
+  instruction?: string;
   points: number;
   imageUrl?: string;
 }
@@ -66,6 +67,7 @@ const ListeningQuestionSchema = new Schema<IListeningQuestion>({
 
   contextText: { type: String },
   question: { type: String, required: true },
+  instruction: { type: String },
   options: [String],
   correctAnswer: { type: Schema.Types.Mixed, required: true },
   points: { type: Number, default: 1 },
@@ -96,7 +98,7 @@ const ListeningSchema = new Schema<IListening>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Export model

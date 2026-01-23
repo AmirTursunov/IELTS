@@ -66,7 +66,7 @@ interface StatsResponse {
 ======================= */
 
 export async function GET(
-  request: NextRequest
+  request: NextRequest,
 ): Promise<NextResponse<StatsResponse>> {
   try {
     const session = await getServerSession(authOptions);
@@ -77,7 +77,7 @@ export async function GET(
           success: false,
           error: "Unauthorized",
         },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -98,7 +98,7 @@ export async function GET(
           success: false,
           error: "User not found",
         },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -116,9 +116,9 @@ export async function GET(
             (
               testHistory.reduce(
                 (sum: number, test: TestHistoryItem) => sum + test.bandScore,
-                0
+                0,
               ) / totalTests
-            ).toFixed(1)
+            ).toFixed(1),
           )
         : 0;
 
@@ -133,9 +133,9 @@ export async function GET(
     const recentTests = [...testHistory]
       .sort(
         (a: TestHistoryItem, b: TestHistoryItem) =>
-          new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime()
+          new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime(),
       )
-      .slice(0, 10)
+      .slice(0, 5)
       .map((test: TestHistoryItem) => ({
         id: test.testId,
         type: test.testType,
@@ -170,7 +170,7 @@ export async function GET(
     (Object.keys(performanceByType) as TestType[]).forEach((type: TestType) => {
       if (testCounts[type] > 0) {
         performanceByType[type] = Number(
-          (performanceByType[type] / testCounts[type]).toFixed(1)
+          (performanceByType[type] / testCounts[type]).toFixed(1),
         );
       }
     });
@@ -200,7 +200,7 @@ export async function GET(
           },
         },
       },
-      { status: 200 }
+      { status: 200 },
     );
   } catch (error: unknown) {
     console.error("Stats API error:", error);
@@ -210,7 +210,7 @@ export async function GET(
         success: false,
         error: "Failed to fetch stats",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

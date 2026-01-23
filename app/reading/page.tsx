@@ -157,7 +157,7 @@ export default function ReadingTestsPage() {
         </div>
 
         {/* Filter */}
-        <div className="bg-white rounded-xl shadow-lg p-5 mb-8 flex items-center gap-4 border border-[#9C74FF]">
+        <div className="bg-white rounded-xl shadow-lg p-5 mb-8 flex items-center gap-4">
           <div className="flex items-center gap-2 text-[#9C74FF]">
             <Filter size={20} />
             <span className="font-semibold text-gray-700">Filter:</span>
@@ -196,7 +196,7 @@ export default function ReadingTestsPage() {
 
         {/* Stats */}
         {filteredReading.length > 0 && (
-          <div className="mt-10 mb-10 bg-white rounded-xl shadow-md p-5 border border-[#9C74FF]">
+          <div className="mt-10 mb-10 bg-white rounded-xl shadow-md p-5">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
               <div className="p-4 bg-linear-to-br from-purple-50 via-violet-50 rounded-lg border border-[#9C74FF]">
                 <div className="text-2xl font-bold text-[#9C74FF] mb-1">
@@ -211,7 +211,7 @@ export default function ReadingTestsPage() {
                 <div className="text-2xl font-bold text-[#9C74FF] mb-1">
                   {filteredReading.reduce(
                     (acc, test) => acc + (test.passages?.length || 3),
-                    0
+                    0,
                   )}
                 </div>
                 <div className="text-gray-600 text-sm font-medium">
@@ -223,7 +223,7 @@ export default function ReadingTestsPage() {
                 <div className="text-2xl font-bold text-[#9C74FF] mb-1">
                   {filteredReading.reduce(
                     (acc, test) => acc + test.totalQuestions,
-                    0
+                    0,
                   )}
                 </div>
                 <div className="text-gray-600 text-sm font-medium">
@@ -236,7 +236,7 @@ export default function ReadingTestsPage() {
 
         {/* Tests Grid */}
         {filteredReading.length === 0 ? (
-          <div className="text-center py-20 bg-white rounded-2xl shadow-lg border border-[#9C74FF]">
+          <div className="text-center py-20 bg-white rounded-2xl shadow-lg border ">
             <div className="bg-linear-to-br from-purple-50 via-violet-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
               <BookOpen size={48} className="text-[#9C74FF]" />
             </div>
@@ -269,7 +269,7 @@ export default function ReadingTestsPage() {
                     <div className="flex items-center gap-2 flex-wrap">
                       <span
                         className={`px-3 py-1 rounded-full text-xs font-bold border-2 ${getDifficultyColor(
-                          test.difficulty
+                          test.difficulty,
                         )}`}
                       >
                         {test.difficulty}

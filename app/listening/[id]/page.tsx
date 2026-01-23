@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, JSX } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react"; // <--- 1. IMPORT QILINDI
 import {
   ChevronLeft,
   Clock,
@@ -16,18 +17,13 @@ import {
   Headphones,
   X,
   Bookmark,
-  Plus,
   Trash2,
-  MoreVertical,
-  StickyNote,
 } from "lucide-react";
 import { QuestionNotes } from "../../components/QuestionNotes";
-import Footer from "@/app/components/Footer";
 import ListeningFooterNav from "@/app/components/listening/Footer";
-import { set } from "mongoose";
+import ReviewModal from "@/app/components/TestReview";
 
 // --- INTERFACES ---
-
 interface Question {
   questionNumber: number;
   questionType: string;
@@ -35,6 +31,7 @@ interface Question {
   question: string;
   options?: string[];
   correctAnswer: string | string[];
+  instruction?: string;
   points: number;
   imageUrl?: string;
 }
@@ -79,6 +76,8 @@ export default function ListeningTestPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
+  const { data: session } = useSession();
+
   const testId = params?.id as string;
   const currentPart = parseInt(searchParams?.get("part") || "0");
 
@@ -120,14 +119,15 @@ export default function ListeningTestPage() {
     highlightId: string;
   } | null>(null);
 
+  // Review modal states
+  const [reviewOpen, setReviewOpen] = useState(false);
+
   // Audio player states
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
-  const [openActionMenu, setOpenActionMenu] = useState<number | null>(null);
-  const [openNoteFor, setOpenNoteFor] = useState<number | null>(null);
 
   const audioRef = useRef<HTMLAudioElement>(null);
 
@@ -136,8 +136,6 @@ export default function ListeningTestPage() {
   useEffect(() => {
     const handleGlobalClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-
-      // Agar bosilgan joy highlight bo'lmasa, Delete tugmasini yopish
       if (!target.closest(".highlight-interactive")) {
         setActiveHighlightId(null);
       }
@@ -169,11 +167,7 @@ export default function ListeningTestPage() {
     }, 1000);
     return () => clearInterval(timer);
   }, [test, testStarted]);
-  useEffect(() => {
-    const close = () => setOpenActionMenu(null);
-    window.addEventListener("click", close);
-    return () => window.removeEventListener("click", close);
-  }, []);
+
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -277,7 +271,6 @@ export default function ListeningTestPage() {
   };
 
   // ===== HIGHLIGHT LOGIC  =====
-
   const handleTextSelection = (e: React.MouseEvent, contentId: string) => {
     e.stopPropagation();
 
@@ -285,22 +278,16 @@ export default function ListeningTestPage() {
     if (!s || s.rangeCount === 0 || s.isCollapsed) {
       return;
     }
-
     const text = s.toString().trim();
     if (!text) return;
-
     try {
       const r = s.getRangeAt(0);
       const pre = r.cloneRange();
-
       pre.selectNodeContents(e.currentTarget);
       pre.setEnd(r.startContainer, r.startOffset);
-
       const start = pre.toString().length;
       const end = start + text.length;
-
       const rect = r.getBoundingClientRect();
-
       setSel({
         text,
         start,
@@ -316,7 +303,6 @@ export default function ListeningTestPage() {
 
   const addHighlight = (colorName: string) => {
     if (!sel) return;
-
     const newHighlight: Highlight = {
       id: Date.now().toString(),
       start: sel.start,
@@ -325,46 +311,40 @@ export default function ListeningTestPage() {
       color: colorName,
       note: undefined,
     };
-
     setHighlights((prev) => ({
       ...prev,
       [sel.contentId]: [...(prev[sel.contentId] || []), newHighlight],
     }));
-
     setSel(null);
     window.getSelection()?.removeAllRanges();
   };
 
-  const openNoteModal = () => {
-    if (!sel) return;
-
-    const newHighlight: Highlight = {
-      id: Date.now().toString(),
-      start: sel.start,
-      end: sel.end,
-      text: sel.text,
-      color: "yellow",
-      note: "",
-    };
-
-    setHighlights((prev) => ({
-      ...prev,
-      [sel.contentId]: [...(prev[sel.contentId] || []), newHighlight],
-    }));
-
-    setEditingHighlight({
-      contentId: sel.contentId,
-      highlightId: newHighlight.id,
-    });
-    setCurrentNoteText("");
-    setShowNoteModal(true);
-    setSel(null);
-    window.getSelection()?.removeAllRanges();
-  };
+  // const openNoteModal = () => {
+  //   if (!sel) return;
+  //   const newHighlight: Highlight = {
+  //     id: Date.now().toString(),
+  //     start: sel.start,
+  //     end: sel.end,
+  //     text: sel.text,
+  //     color: "yellow",
+  //     note: "",
+  //   };
+  //   setHighlights((prev) => ({
+  //     ...prev,
+  //     [sel.contentId]: [...(prev[sel.contentId] || []), newHighlight],
+  //   }));
+  //   setEditingHighlight({
+  //     contentId: sel.contentId,
+  //     highlightId: newHighlight.id,
+  //   });
+  //   setCurrentNoteText("");
+  //   setShowNoteModal(true);
+  //   setSel(null);
+  //   window.getSelection()?.removeAllRanges();
+  // };
 
   const saveNote = () => {
     if (!editingHighlight) return;
-
     setHighlights((prev) => ({
       ...prev,
       [editingHighlight.contentId]: prev[editingHighlight.contentId].map((h) =>
@@ -373,7 +353,6 @@ export default function ListeningTestPage() {
           : h,
       ),
     }));
-
     setShowNoteModal(false);
     setEditingHighlight(null);
     setCurrentNoteText("");
@@ -404,14 +383,10 @@ export default function ListeningTestPage() {
 
     sortedHighlights.forEach((h, i) => {
       if (h.start < lastIndex || h.start > text.length) return;
-
-      // Matnning highlightgacha bo'lgan qismi
       const before = text.substring(lastIndex, h.start);
       if (before) {
         nodes.push(<span key={`txt-${i}`}>{before}</span>);
       }
-
-      // Highlight qilingan qism
       const safeEnd = Math.min(h.end, text.length);
       const body = text.substring(h.start, safeEnd);
       const colorClass =
@@ -420,30 +395,24 @@ export default function ListeningTestPage() {
       nodes.push(
         <span
           key={`hl-${h.id}`}
-          // O'ZGARISH 1: cursor-pointer va highlight-interactive klassi
           className={`relative highlight-interactive ${colorClass} cursor-pointer rounded px-0.5 box-decoration-clone`}
-          // O'ZGARISH 2: Click bo'lganda Delete tugmasini ko'rsatish/yashirish
           onClick={(e) => {
             e.stopPropagation();
             setActiveHighlightId(activeHighlightId === h.id ? null : h.id);
           }}
         >
           {body}
-
-          {/* Note tooltip (agar note bo'lsa) */}
           {h.note && (
             <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-gray-800 text-white text-xs rounded px-2 py-1 whitespace-nowrap z-50">
               {h.note}
             </span>
           )}
-
-          {/* O'ZGARISH 3: Delete tugmasi faqat aktiv bo'lganda chiqadi (hoverda emas) */}
           {activeHighlightId === h.id && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 deleteHighlight(contentId, h.id);
-                setActiveHighlightId(null); // O'chirilgandan keyin yopish
+                setActiveHighlightId(null);
               }}
               className="absolute -top-9 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-white border border-gray-300 rounded px-2 py-1.5 text-xs shadow-xl z-50 text-red-600 hover:bg-gray-50 whitespace-nowrap"
             >
@@ -459,7 +428,6 @@ export default function ListeningTestPage() {
     if (lastIndex < text.length) {
       nodes.push(<span key="tail">{text.substring(lastIndex)}</span>);
     }
-
     return nodes;
   };
 
@@ -710,6 +678,7 @@ export default function ListeningTestPage() {
     );
   }
 
+  // --- RESULT VIEW ---
   if (showResult && result) {
     return (
       <div className="min-h-screen bg-linear-to-br from-purple-50 via-violet-50 to-purple-100 p-8">
@@ -818,14 +787,26 @@ export default function ListeningTestPage() {
                 Retake Test
               </button>
               <button
-                onClick={() => router.push("/listening")}
-                className="flex-1 py-3 bg-[#9C74FF] text-white rounded-xl font-semibold"
+                onClick={() => setReviewOpen(true)}
+                className="flex-1 py-3 bg-[#9C74FF] text-white rounded-xl font-semibold hover:bg-[#8B5FE8] transition"
               >
                 Back to Tests
               </button>
             </div>
           </div>
         </div>
+        {reviewOpen && (
+          <ReviewModal
+            isOpen={reviewOpen}
+            onClose={() => {
+              setReviewOpen(false);
+              router.push("/listening");
+            }}
+            testId={String(testId)}
+            userId={session?.user?.id || "anonymous"}
+            testType="listening"
+          />
+        )}
       </div>
     );
   }
@@ -840,7 +821,6 @@ export default function ListeningTestPage() {
           className="fixed z-50 flex items-center gap-2 bg-white shadow-xl rounded-full p-2 border border-gray-200"
           style={{ left: sel.clientX, top: sel.clientY }}
         >
-          {/* Close Button */}
           <button
             onClick={() => {
               setSel(null);
@@ -850,10 +830,7 @@ export default function ListeningTestPage() {
           >
             <X size={16} />
           </button>
-
           <div className="w-px h-6 bg-gray-300"></div>
-
-          {/* Color Buttons */}
           {HIGHLIGHT_COLORS.map((c) => (
             <button
               key={c.name}
@@ -861,7 +838,6 @@ export default function ListeningTestPage() {
               className={`w-8 h-8 rounded-full ${c.bg} ${c.hover} transition border border-gray-300`}
             />
           ))}
-
           <div className="w-px h-6 bg-gray-300"></div>
         </div>
       )}
@@ -886,13 +862,7 @@ export default function ListeningTestPage() {
               {isSubmitting ? (
                 <button
                   disabled
-                  className="
-    flex-1 px-6 py-3 w-full rounded-xl font-semibold
-    bg-[#9C74FF] text-white
-    shadow-md
-    opacity-60 cursor-not-allowed
-    hover:bg-[#9C74FF]
-  "
+                  className="flex-1 px-6 py-3 w-full rounded-xl font-semibold bg-[#9C74FF] text-white shadow-md opacity-60 cursor-not-allowed hover:bg-[#9C74FF]"
                 >
                   Submitting...
                 </button>
@@ -1072,7 +1042,6 @@ export default function ListeningTestPage() {
                       const q = questions[i];
 
                       // 1. MAP QUESTIONS
-                      // 1) MAP GROUP
                       if (isMapType(q)) {
                         const mapGroup: any[] = [q];
                         processedQuestions.add(i);
@@ -1099,12 +1068,13 @@ export default function ListeningTestPage() {
                             <div className="p-6 bg-linear-to-br from-purple-50 to-violet-50 rounded-2xl border-2 border-[#9C74FF]/30 shadow-xl">
                               {/* HEADER */}
                               <div className="mb-6 pb-4 border-b border-purple-200">
-                                <h3 className="text-xl font-bold text-[#9C74FF] mb-2 uppercase">
+                                <h3 className="text-lg font-bold text-[#9C74FF] mb-1">
                                   Questions {startQ}-{endQ}
                                 </h3>
                                 <p className="text-sm text-gray-700">
-                                  Label the plan below. Write the correct letter
-                                  next to Questions {startQ}-{endQ}.
+                                  {q.instruction
+                                    ? q.instruction
+                                    : `Label the plan below. Write the correct letter next to Questions ${startQ}-${endQ}.`}
                                 </p>
                               </div>
 
@@ -1135,7 +1105,7 @@ export default function ListeningTestPage() {
 
                                             const blankPattern = /_{2,}/g;
 
-                                            // ✅ BLANK CASE
+                                            // BLANK CASE
                                             if (blankPattern.test(fullText)) {
                                               const parts =
                                                 fullText.split(blankPattern);
@@ -1214,7 +1184,7 @@ export default function ListeningTestPage() {
                                                               }
                                                             />
 
-                                                            {/* ✅ NOTES ICON (MAP) */}
+                                                            {/* NOTES ICON (MAP) */}
                                                             <div
                                                               className={`transition-opacity ${
                                                                 notes[
@@ -1249,7 +1219,7 @@ export default function ListeningTestPage() {
                                               );
                                             }
 
-                                            // ✅ NON-BLANK CASE
+                                            // NON-BLANK CASE
                                             return (
                                               <div className="flex items-center gap-3 group">
                                                 <p
@@ -1316,7 +1286,7 @@ export default function ListeningTestPage() {
                                                   }
                                                 />
 
-                                                {/* ✅ NOTES ICON (MAP else ham) */}
+                                                {/* NOTES ICON (MAP else ham) */}
                                                 <div
                                                   className={`transition-opacity ${
                                                     notes[mq.questionNumber]
@@ -1376,13 +1346,13 @@ export default function ListeningTestPage() {
                                 <h2 className="text-2xl font-bold uppercase tracking-wide text-gray-900 mb-2">
                                   {currentSection.title}
                                 </h2>
-                                <p className="text-lg font-bold text-gray-800">
+                                <p className="text-lg font-bold text-[#9C74FF] mb-1">
                                   Questions {startQ}-{endQ}
                                 </p>
                                 <p className="text-sm text-gray-600 mt-1 italic">
-                                  Complete the notes below. Write{" "}
-                                  <b>NO MORE THAN ONE WORD AND/OR A NUMBER</b>{" "}
-                                  for each answer.
+                                  {q.instruction
+                                    ? q.instruction
+                                    : "Complete the notes below. Write NO MORE THAN ONE WORD AND/OR A NUMBER for each answer."}
                                 </p>
                               </div>
 
@@ -1517,7 +1487,7 @@ export default function ListeningTestPage() {
                                                               }
                                                             />
 
-                                                            {/* ✅ NOTES ICON (NOTE) */}
+                                                            {/* NOTES ICON (NOTE) */}
                                                             <div
                                                               className={`transition-opacity ${
                                                                 notes[
@@ -1581,113 +1551,229 @@ export default function ListeningTestPage() {
                       }
 
                       // 3) STANDARD QUESTIONS (MCQ)
+                      // 3) STANDARD QUESTIONS (MCQ, Matching, Short Answer)
                       else {
+                        // GURUHLASH MANTIQI BOSHLANDI
+                        const stdGroup: any[] = [q];
                         processedQuestions.add(i);
+
+                        // Keyingi savollar ham xuddi shu turdami? Tekshiramiz
+                        for (let j = i + 1; j < questions.length; j++) {
+                          const nextQ = questions[j];
+                          // Agar tipi bir xil bo'lsa, guruhga qo'shamiz
+                          if (nextQ.questionType === q.questionType) {
+                            stdGroup.push(nextQ);
+                            processedQuestions.add(j);
+                            i = j; // Loopni oldinga suramiz
+                          } else break;
+                        }
+
+                        const startQ = stdGroup[0].questionNumber;
+                        const endQ =
+                          stdGroup[stdGroup.length - 1].questionNumber;
+
+                        // Default Instruction (agar backenddan kelmasa)
+                        let defaultInst = "Answer the questions below.";
+                        if (q.questionType === "multiple-choice")
+                          defaultInst = "Choose the correct letter, A, B or C.";
+                        else if (q.questionType === "matching")
+                          defaultInst = "Match the items given below.";
+                        else if (q.questionType === "short-answer")
+                          defaultInst =
+                            "Write NO MORE THAN TWO WORDS for each answer.";
+
+                        const displayInstruction =
+                          stdGroup[0].instruction || defaultInst;
+
                         elements.push(
                           <div
-                            id={`q-${q.questionNumber}`}
-                            key={q.questionNumber}
-                            className="scroll-mt-28"
+                            key={`std-group-${startQ}`}
+                            className="mb-8 scroll-mt-28"
+                            id={`group-${startQ}`}
                           >
-                            <div className="group relative bg-gray-50 rounded-xl p-5 border border-gray-200 hover:border-[#9C74FF] transition-all mb-4">
-                              <div className="flex gap-4">
-                                <div className="flex items-start gap-2 shrink-0">
-                                  <span className="font-bold text-gray-900 text-lg">
-                                    {q.questionNumber}.
-                                  </span>
+                            {/* --- HEADER QISMI (Questions X-X & Instruction) --- */}
+                            <div className="bg-white border-2 border-gray-200 rounded-xl overflow-hidden shadow-sm mb-6">
+                              <div className="bg-linear-to-r from-gray-50 to-gray-100 border-b border-gray-200 px-6 py-4">
+                                <h3 className="text-lg font-bold text-[#9C74FF] mb-1">
+                                  Questions {startQ}-{endQ}
+                                </h3>
+                                <p className="text-gray-700 font-medium text-sm italic">
+                                  {displayInstruction}
+                                </p>
+                              </div>
+
+                              <div className="p-6 space-y-6">
+                                {stdGroup.map((sq: any) => (
                                   <div
-                                    className={`mt-1 transition-all ${
-                                      notes[q.questionNumber]
-                                        ? "opacity-100"
-                                        : "opacity-0 group-hover:opacity-100"
-                                    }`}
+                                    id={`q-${sq.questionNumber}`}
+                                    key={sq.questionNumber}
+                                    className="scroll-mt-32"
                                   >
-                                    <QuestionNotes
-                                      questionNumber={q.questionNumber}
-                                      initialNote={
-                                        notes[q.questionNumber] || ""
-                                      }
-                                      onSaveNote={handleSaveNote}
-                                    />
-                                  </div>
-                                </div>
+                                    <div className="group relative bg-gray-50 rounded-xl p-5 border border-gray-200 hover:border-[#9C74FF] transition-all">
+                                      <div className="flex gap-4">
+                                        <div className="flex items-start gap-2 shrink-0">
+                                          <span className="font-bold text-gray-900 text-lg bg-white w-8 h-8 flex items-center justify-center rounded-full border border-gray-300 shadow-sm">
+                                            {sq.questionNumber}
+                                          </span>
+                                          <div
+                                            className={`mt-1 transition-all ${
+                                              notes[sq.questionNumber]
+                                                ? "opacity-100"
+                                                : "opacity-0 group-hover:opacity-100"
+                                            }`}
+                                          >
+                                            <QuestionNotes
+                                              questionNumber={sq.questionNumber}
+                                              initialNote={
+                                                notes[sq.questionNumber] || ""
+                                              }
+                                              onSaveNote={handleSaveNote}
+                                            />
+                                          </div>
+                                        </div>
 
-                                <div className="flex-1">
-                                  <p
-                                    className="text-gray-800 mb-3 font-medium cursor-text"
-                                    onMouseUp={(e) =>
-                                      handleTextSelection(
-                                        e,
-                                        `question-${q.questionNumber}-std`,
-                                      )
-                                    }
-                                  >
-                                    {renderTextWithHighlights(
-                                      q.question,
-                                      `question-${q.questionNumber}-std`,
-                                    )}
-                                  </p>
+                                        <div className="flex-1">
+                                          {/* Context Text (agar bo'lsa) */}
+                                          {sq.contextText && (
+                                            <p className="mb-2 text-sm text-gray-600 italic">
+                                              {sq.contextText}
+                                            </p>
+                                          )}
 
-                                  {q.questionType === "multiple-choice" &&
-                                    q.options && (
-                                      <div className="space-y-2">
-                                        {q.options.map(
-                                          (opt: string, idx: number) => (
-                                            <label
-                                              key={idx}
-                                              className={`flex items-center gap-3 p-3 border-2 rounded-lg cursor-pointer ${
-                                                answers[q.questionNumber] ===
-                                                opt
-                                                  ? "bg-purple-50 border-[#9C74FF]"
-                                                  : "border-gray-200 hover:bg-gray-100"
-                                              }`}
-                                            >
-                                              <input
-                                                type="radio"
-                                                name={`q-${q.questionNumber}`}
-                                                value={opt}
-                                                checked={
-                                                  answers[q.questionNumber] ===
-                                                  opt
+                                          <p
+                                            className="text-gray-900 mb-4 font-semibold text-lg cursor-text"
+                                            onMouseUp={(e) =>
+                                              handleTextSelection(
+                                                e,
+                                                `question-${sq.questionNumber}-std`,
+                                              )
+                                            }
+                                          >
+                                            {renderTextWithHighlights(
+                                              sq.question,
+                                              `question-${sq.questionNumber}-std`,
+                                            )}
+                                          </p>
+
+                                          {/* Multiple Choice Options */}
+                                          {sq.questionType ===
+                                            "multiple-choice" &&
+                                            sq.options && (
+                                              <div className="space-y-3">
+                                                {sq.options.map(
+                                                  (
+                                                    opt: string,
+                                                    idx: number,
+                                                  ) => (
+                                                    <label
+                                                      key={idx}
+                                                      className={`flex items-center gap-4 p-4 border-2 rounded-xl cursor-pointer transition-all ${
+                                                        answers[
+                                                          sq.questionNumber
+                                                        ] === opt
+                                                          ? "bg-purple-50 border-[#9C74FF] shadow-md"
+                                                          : "border-gray-200 hover:bg-white hover:border-gray-300 hover:shadow-sm"
+                                                      }`}
+                                                    >
+                                                      <div
+                                                        className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                                                          answers[
+                                                            sq.questionNumber
+                                                          ] === opt
+                                                            ? "border-[#9C74FF]"
+                                                            : "border-gray-400"
+                                                        }`}
+                                                      >
+                                                        {answers[
+                                                          sq.questionNumber
+                                                        ] === opt && (
+                                                          <div className="w-3 h-3 bg-[#9C74FF] rounded-full" />
+                                                        )}
+                                                      </div>
+                                                      <input
+                                                        type="radio"
+                                                        name={`q-${sq.questionNumber}`}
+                                                        value={opt}
+                                                        checked={
+                                                          answers[
+                                                            sq.questionNumber
+                                                          ] === opt
+                                                        }
+                                                        onChange={(e) =>
+                                                          handleAnswerChange(
+                                                            sq.questionNumber,
+                                                            e.target.value,
+                                                          )
+                                                        }
+                                                        className="hidden" // Inputni yashirib custom dizayn qildim
+                                                      />
+                                                      <span className="text-gray-700 font-medium">
+                                                        {opt}
+                                                      </span>
+                                                    </label>
+                                                  ),
+                                                )}
+                                              </div>
+                                            )}
+
+                                          {/* Matching / Dropdown */}
+                                          {sq.questionType === "matching" &&
+                                            sq.options && (
+                                              <select
+                                                className="w-full max-w-md p-3 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-purple-100 focus:border-[#9C74FF] bg-white font-medium text-gray-700"
+                                                value={
+                                                  answers[sq.questionNumber] ||
+                                                  ""
                                                 }
                                                 onChange={(e) =>
                                                   handleAnswerChange(
-                                                    q.questionNumber,
+                                                    sq.questionNumber,
                                                     e.target.value,
                                                   )
                                                 }
-                                                className="text-[#9C74FF] focus:ring-[#9C74FF]"
-                                              />
-                                              <span>{opt}</span>
-                                            </label>
-                                          ),
-                                        )}
-                                      </div>
-                                    )}
+                                              >
+                                                <option value="">
+                                                  Choose an answer...
+                                                </option>
+                                                {sq.options.map(
+                                                  (
+                                                    opt: string,
+                                                    idx: number,
+                                                  ) => (
+                                                    <option
+                                                      key={idx}
+                                                      value={opt}
+                                                    >
+                                                      {opt}
+                                                    </option>
+                                                  ),
+                                                )}
+                                              </select>
+                                            )}
 
-                                  {q.questionType === "matching" &&
-                                    q.options && (
-                                      <select
-                                        className="w-full max-w-md p-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#9C74FF]"
-                                        value={answers[q.questionNumber] || ""}
-                                        onChange={(e) =>
-                                          handleAnswerChange(
-                                            q.questionNumber,
-                                            e.target.value,
-                                          )
-                                        }
-                                      >
-                                        <option value="">Select option</option>
-                                        {q.options.map(
-                                          (opt: string, idx: number) => (
-                                            <option key={idx} value={opt}>
-                                              {opt}
-                                            </option>
-                                          ),
-                                        )}
-                                      </select>
-                                    )}
-                                </div>
+                                          {/* Short Answer */}
+                                          {sq.questionType ===
+                                            "short-answer" && (
+                                            <input
+                                              type="text"
+                                              className="w-full max-w-md p-3 border-2 border-gray-300 rounded-xl focus:ring-4 focus:ring-purple-100 focus:border-[#9C74FF] font-medium text-gray-700"
+                                              placeholder="Type your answer here..."
+                                              value={
+                                                answers[sq.questionNumber] || ""
+                                              }
+                                              onChange={(e) =>
+                                                handleAnswerChange(
+                                                  sq.questionNumber,
+                                                  e.target.value,
+                                                )
+                                              }
+                                            />
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
                               </div>
                             </div>
                           </div>,
@@ -1711,6 +1797,18 @@ export default function ListeningTestPage() {
         answers={answers}
         flaggedQuestions={flaggedQuestions}
       />
+      {/* Review Modal */}
+      {reviewOpen && (
+        <ReviewModal
+          isOpen={reviewOpen}
+          onClose={() => {
+            setReviewOpen(false);
+            router.push("/listening");
+          }}
+          testId={String(testId)}
+          userId={session?.user?.id || "anonymous"}
+        />
+      )}
     </div>
   );
 }

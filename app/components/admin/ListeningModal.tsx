@@ -12,9 +12,25 @@ import {
   Image as ImageIcon,
   Check,
   BookOpen,
+  Info, // <--- YANGI ICON
 } from "lucide-react";
 
 const API_BASE = "/api";
+
+// --- YANGI: KENG TARQALGAN INSTRUKSIYALAR ---
+const COMMON_INSTRUCTIONS = [
+  "Write NO MORE THAN ONE WORD for each answer.",
+  "Write NO MORE THAN ONE WORD AND/OR A NUMBER for each answer.",
+  "Write NO MORE THAN TWO WORDS AND/OR A NUMBER for each answer.",
+  "Write NO MORE THAN THREE WORDS for each answer.",
+  "Choose the correct letter, A, B, or C.",
+  "Choose TWO letters, A-E.",
+  "Label the map below. Write the correct letter, A-G, next to Questions.",
+  "Complete the notes below.",
+  "Complete the table below.",
+  "Complete the flow-chart below.",
+  "Answer the questions below.",
+];
 
 type QuestionType =
   | "multiple-choice"
@@ -33,6 +49,7 @@ interface QuestionGroup {
   type: QuestionType;
   count: number;
   sharedImageUrl?: string;
+  instruction?: string; // <--- YANGI FIELD
   questions: Array<{
     contextText?: string;
     question: string;
@@ -64,6 +81,8 @@ const SAMPLE_TEST_DATA = {
           id: "g1",
           type: "form-completion" as const,
           count: 10,
+          instruction:
+            "Write NO MORE THAN ONE WORD AND/OR A NUMBER for each answer.", // Samplega ham qo'shildi
           questions: [
             {
               contextText: "A customer is booking a room over the phone.",
@@ -120,6 +139,7 @@ const SAMPLE_TEST_DATA = {
           id: "g2",
           type: "note-completion" as const,
           count: 6,
+          instruction: "Complete the notes below. Write ONE WORD ONLY.",
           questions: [
             {
               contextText: "The guide is describing the museum's history.",
@@ -152,6 +172,7 @@ const SAMPLE_TEST_DATA = {
           id: "g3",
           type: "multiple-choice" as const,
           count: 4,
+          instruction: "Choose the correct letter, A, B, or C.",
           questions: [
             {
               question: "17. Entry free on:",
@@ -192,6 +213,7 @@ const SAMPLE_TEST_DATA = {
           id: "g4",
           type: "plan-map-diagram" as const,
           count: 6,
+          instruction: "Label the plan below.",
           sharedImageUrl:
             "https://res.cloudinary.com/demo/image/upload/sample.jpg",
           questions: [
@@ -226,6 +248,7 @@ const SAMPLE_TEST_DATA = {
           id: "g5",
           type: "sentence-completion" as const,
           count: 4,
+          instruction: "Complete the sentences below.",
           questions: [
             {
               question: "Orientation starts on 27. ________",
@@ -257,6 +280,7 @@ const SAMPLE_TEST_DATA = {
           id: "g6",
           type: "summary-completion" as const,
           count: 7,
+          instruction: "Complete the summary below.",
           questions: [
             {
               contextText: "The professor discusses global warming effects.",
@@ -293,6 +317,7 @@ const SAMPLE_TEST_DATA = {
           id: "g7",
           type: "matching" as const,
           count: 3,
+          instruction: "Choose the correct letter, A, B or C.",
           questions: [
             {
               question: "38. CO2 →",
@@ -346,7 +371,7 @@ export const AddListeningTestModal: FC<{
 }> = ({ onClose, onSuccess }) => {
   const [testName, setTestName] = useState("");
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">(
-    "medium"
+    "medium",
   );
   const [timeLimit, setTimeLimit] = useState(30);
 
@@ -390,7 +415,7 @@ export const AddListeningTestModal: FC<{
   const loadSampleTest = () => {
     if (
       !confirm(
-        "Load full 40-question sample test? (Current data will be replaced)"
+        "Load full 40-question sample test? (Current data will be replaced)",
       )
     )
       return;
@@ -417,6 +442,8 @@ export const AddListeningTestModal: FC<{
       id: `group-${Date.now()}`,
       type: "short-answer",
       count: defaultCount,
+      instruction:
+        "Write NO MORE THAN ONE WORD and/or A NUMBER for each answer.", // <--- DEFAULT INSTRUCTION
       questions: Array(defaultCount)
         .fill(null)
         .map(() => ({
@@ -432,14 +459,32 @@ export const AddListeningTestModal: FC<{
     setSections(updated);
   };
 
+  // --- YANGI: INSTRUCTION UPDATE QILISH ---
+  const updateGroupInstruction = (
+    sectionIdx: number,
+    groupIdx: number,
+    value: string,
+  ) => {
+    const updated = [...sections];
+    updated[sectionIdx].questionGroups[groupIdx].instruction = value;
+    setSections(updated);
+  };
+
   const updateGroupType = (
     sectionIdx: number,
     groupIdx: number,
-    type: QuestionType
+    type: QuestionType,
   ) => {
     const updated = [...sections];
     const group = updated[sectionIdx].questionGroups[groupIdx];
     group.type = type;
+
+    // --- YANGI: DEFAULT INSTRUCTION LOGIKASI ---
+    if (type === "multiple-choice")
+      group.instruction = "Choose the correct letter, A, B, or C.";
+    else if (type === "plan-map-diagram")
+      group.instruction = "Label the plan below.";
+    else group.instruction = "Write NO MORE THAN ONE WORD for each answer.";
 
     const needsOptions = type === "multiple-choice" || type === "matching";
     group.questions = group.questions.map((q) => ({
@@ -453,7 +498,7 @@ export const AddListeningTestModal: FC<{
   const updateGroupCount = (
     sectionIdx: number,
     groupIdx: number,
-    newCount: number
+    newCount: number,
   ) => {
     const updated = [...sections];
     const group = updated[sectionIdx].questionGroups[groupIdx];
@@ -492,7 +537,7 @@ export const AddListeningTestModal: FC<{
     groupIdx: number,
     qIdx: number,
     field: "contextText" | "question" | "correctAnswer",
-    value: string
+    value: string,
   ) => {
     const updated = [...sections];
     updated[sectionIdx].questionGroups[groupIdx].questions[qIdx][field] = value;
@@ -504,7 +549,7 @@ export const AddListeningTestModal: FC<{
     groupIdx: number,
     qIdx: number,
     optIdx: number,
-    value: string
+    value: string,
   ) => {
     const updated = [...sections];
     const q = updated[sectionIdx].questionGroups[groupIdx].questions[qIdx];
@@ -523,7 +568,7 @@ export const AddListeningTestModal: FC<{
 
   const handleAudioUpload = async (
     sectionIdx: number,
-    e: React.ChangeEvent<HTMLInputElement>
+    e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -555,7 +600,7 @@ export const AddListeningTestModal: FC<{
   const handleImageUpload = async (
     sectionIdx: number,
     groupIdx: number,
-    e: React.ChangeEvent<HTMLInputElement>
+    e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -596,7 +641,7 @@ export const AddListeningTestModal: FC<{
         alert(
           `Section ${i + 1} must have exactly 10 questions! (Currently: ${
             section.totalQuestions
-          })`
+          })`,
         );
         return;
       }
@@ -613,7 +658,7 @@ export const AddListeningTestModal: FC<{
             alert(
               `Section ${i + 1}, Group ${j + 1}, Question ${
                 k + 1
-              }: Enter question text!`
+              }: Enter question text!`,
             );
             return;
           }
@@ -621,7 +666,7 @@ export const AddListeningTestModal: FC<{
             alert(
               `Section ${i + 1}, Group ${j + 1}, Question ${
                 k + 1
-              }: Enter correct answer!`
+              }: Enter correct answer!`,
             );
             return;
           }
@@ -632,7 +677,7 @@ export const AddListeningTestModal: FC<{
             alert(
               `Section ${i + 1}, Group ${j + 1}, Question ${
                 k + 1
-              }: Fill all options!`
+              }: Fill all options!`,
             );
             return;
           }
@@ -650,6 +695,8 @@ export const AddListeningTestModal: FC<{
             questionNumber: questionNumber++,
             questionType: group.type,
             contextText: q.contextText || "",
+            // --- O'ZGARISH: Instruction maydonini qo'shdik ---
+            instruction: group.instruction || "",
             question: q.question,
             options: q.options,
             correctAnswer: q.correctAnswer,
@@ -786,8 +833,8 @@ export const AddListeningTestModal: FC<{
                   section.totalQuestions === 10
                     ? "border-green-400 bg-green-50"
                     : section.totalQuestions > 0
-                    ? "border-yellow-400 bg-yellow-50"
-                    : "border-gray-300 bg-white"
+                      ? "border-yellow-400 bg-yellow-50"
+                      : "border-gray-300 bg-white"
                 }`}
               >
                 <div
@@ -795,12 +842,12 @@ export const AddListeningTestModal: FC<{
                     section.totalQuestions === 10
                       ? "bg-green-100"
                       : section.totalQuestions > 0
-                      ? "bg-yellow-100"
-                      : "bg-gray-50"
+                        ? "bg-yellow-100"
+                        : "bg-gray-50"
                   }`}
                   onClick={() =>
                     setExpandedSection(
-                      expandedSection === sectionIdx ? null : sectionIdx
+                      expandedSection === sectionIdx ? null : sectionIdx,
                     )
                   }
                 >
@@ -811,8 +858,8 @@ export const AddListeningTestModal: FC<{
                           section.totalQuestions === 10
                             ? "bg-green-500 text-white"
                             : section.totalQuestions > 0
-                            ? "bg-yellow-500 text-white"
-                            : "bg-gray-300 text-gray-600"
+                              ? "bg-yellow-500 text-white"
+                              : "bg-gray-300 text-gray-600"
                         }`}
                       >
                         {section.sectionNumber}
@@ -906,7 +953,7 @@ export const AddListeningTestModal: FC<{
                               className="p-4 bg-gray-100 cursor-pointer flex items-center justify-between"
                               onClick={() =>
                                 setExpandedGroup(
-                                  expandedGroup === group.id ? null : group.id
+                                  expandedGroup === group.id ? null : group.id,
                                 )
                               }
                             >
@@ -917,7 +964,7 @@ export const AddListeningTestModal: FC<{
                                 <span className="font-bold">
                                   {
                                     QUESTION_TYPES.find(
-                                      (t) => t.value === group.type
+                                      (t) => t.value === group.type,
                                     )?.label
                                   }
                                 </span>
@@ -951,7 +998,7 @@ export const AddListeningTestModal: FC<{
                                       updateGroupType(
                                         sectionIdx,
                                         groupIdx,
-                                        e.target.value as QuestionType
+                                        e.target.value as QuestionType,
                                       )
                                     }
                                     className="px-3 py-2 border-2 border-gray-300 rounded-lg"
@@ -971,10 +1018,59 @@ export const AddListeningTestModal: FC<{
                                       updateGroupCount(
                                         sectionIdx,
                                         groupIdx,
-                                        parseInt(e.target.value) || 1
+                                        parseInt(e.target.value) || 1,
                                       )
                                     }
                                     className="px-3 py-2 border-2 border-gray-300 rounded-lg"
+                                  />
+                                </div>
+
+                                {/* --- YANGI: INSTRUCTION BO'LIMI --- */}
+                                <div>
+                                  <label className=" text-xs font-bold text-gray-600 mb-1 flex items-center gap-1">
+                                    <Info
+                                      size={12}
+                                      className="text-purple-500"
+                                    />
+                                    Instruction (shown before questions)
+                                  </label>
+                                  <div className="relative">
+                                    <select
+                                      value={group.instruction || ""}
+                                      onChange={(e) =>
+                                        updateGroupInstruction(
+                                          sectionIdx,
+                                          groupIdx,
+                                          e.target.value,
+                                        )
+                                      }
+                                      className="w-full px-3 py-2 border-2 border-purple-200 bg-purple-50/50 rounded-lg text-sm font-medium focus:ring-2 focus:ring-purple-500 appearance-none"
+                                    >
+                                      <option value="">
+                                        -- No Instruction --
+                                      </option>
+                                      {COMMON_INSTRUCTIONS.map((inst, i) => (
+                                        <option key={i} value={inst}>
+                                          {inst}
+                                        </option>
+                                      ))}
+                                    </select>
+                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
+                                  </div>
+
+                                  {/* Custom Instruction Input */}
+                                  <input
+                                    type="text"
+                                    placeholder="Or type custom instruction..."
+                                    className="w-full mt-2 px-3 py-2 border-b-2 border-gray-200 text-xs focus:outline-none focus:border-purple-400"
+                                    value={group.instruction}
+                                    onChange={(e) =>
+                                      updateGroupInstruction(
+                                        sectionIdx,
+                                        groupIdx,
+                                        e.target.value,
+                                      )
+                                    }
                                   />
                                 </div>
 
@@ -987,7 +1083,7 @@ export const AddListeningTestModal: FC<{
                                         handleImageUpload(
                                           sectionIdx,
                                           groupIdx,
-                                          e
+                                          e,
                                         )
                                       }
                                       className="hidden"
@@ -1049,7 +1145,7 @@ export const AddListeningTestModal: FC<{
                                               groupIdx,
                                               qIdx,
                                               "contextText",
-                                              e.target.value
+                                              e.target.value,
                                             )
                                           }
                                           rows={3}
@@ -1075,7 +1171,7 @@ export const AddListeningTestModal: FC<{
                                               groupIdx,
                                               qIdx,
                                               "question",
-                                              e.target.value
+                                              e.target.value,
                                             )
                                           }
                                           rows={2}
@@ -1101,12 +1197,12 @@ export const AddListeningTestModal: FC<{
                                                   groupIdx,
                                                   qIdx,
                                                   optIdx,
-                                                  e.target.value
+                                                  e.target.value,
                                                 )
                                               }
                                               className="px-3 py-2 border-2 border-gray-300 rounded-lg"
                                               placeholder={`Option ${String.fromCharCode(
-                                                65 + optIdx
+                                                65 + optIdx,
                                               )}`}
                                             />
                                           ))}
@@ -1122,7 +1218,7 @@ export const AddListeningTestModal: FC<{
                                             groupIdx,
                                             qIdx,
                                             "correctAnswer",
-                                            e.target.value
+                                            e.target.value,
                                           )
                                         }
                                         className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg"

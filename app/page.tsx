@@ -11,6 +11,7 @@ import {
   Users,
 } from "lucide-react";
 import UseDemoButton from "./components/useDemoBtn";
+import ReviewsSlider from "./components/review/ReviewSlider";
 
 export default function HomePage() {
   const stats = [
@@ -178,10 +179,10 @@ export default function HomePage() {
                     idx === 0
                       ? "bg-[#9C74FF]"
                       : idx === 1
-                      ? "bg-[#55BE9D]"
-                      : idx === 2
-                      ? "bg-white"
-                      : "bg-[#9C74FF]"
+                        ? "bg-[#55BE9D]"
+                        : idx === 2
+                          ? "bg-white"
+                          : "bg-[#9C74FF]"
                   } rounded-2xl mb-4 shadow-lg text-3xl`}
                 >
                   {stat.icon}
@@ -486,46 +487,7 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            {testimonials.map((testimonial, idx) => (
-              <div
-                key={idx}
-                className="bg-white rounded-2xl p-8 shadow-xl border-2 border-white hover:shadow-2xl transition-all"
-              >
-                <div className="flex mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className="w-5 h-5 fill-[#F8CB47] text-[#F8CB47]"
-                    />
-                  ))}
-                </div>
-
-                <p className="text-gray-700 mb-6 leading-relaxed italic font-medium">
-                  "{testimonial.text}"
-                </p>
-
-                <div className="flex items-center gap-4 pt-4 border-t-2 border-gray-200">
-                  <img
-                    src={testimonial.image}
-                    alt={testimonial.name}
-                    className="w-12 h-12 rounded-full border-2 border-[#9C74FF]"
-                  />
-                  <div>
-                    <div className="font-black text-[#2A2A2A]">
-                      {testimonial.name}
-                    </div>
-                    <div className="text-sm text-gray-600 font-semibold">
-                      {testimonial.country}
-                    </div>
-                  </div>
-                  <div className="ml-auto bg-[#55BE9D] text-white px-3 py-1.5 rounded-full font-black text-sm">
-                    {testimonial.score}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <ReviewsSlider />
         </div>
       </section>
 
