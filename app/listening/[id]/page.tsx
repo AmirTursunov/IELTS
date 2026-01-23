@@ -22,6 +22,9 @@ import {
   StickyNote,
 } from "lucide-react";
 import { QuestionNotes } from "../../components/QuestionNotes";
+import Footer from "@/app/components/Footer";
+import ListeningFooterNav from "@/app/components/listening/Footer";
+import { set } from "mongoose";
 
 // --- INTERFACES ---
 
@@ -81,6 +84,7 @@ export default function ListeningTestPage() {
 
   const [test, setTest] = useState<ListeningTest | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [timeRemaining, setTimeRemaining] = useState(1800);
   const [answers, setAnswers] = useState<{ [key: number]: string }>({});
@@ -541,6 +545,8 @@ export default function ListeningTestPage() {
   };
 
   const handleSubmit = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     const submitData = {
       testId: testId,
       testType: "listening",
@@ -579,22 +585,10 @@ export default function ListeningTestPage() {
       const localResult = calculateResult();
       setResult(localResult);
       setShowResult(true);
+    } finally {
+      setIsSubmitting(false);
     }
     setShowSubmitModal(false);
-  };
-
-  const goToNextPart = () => {
-    if (currentPart < test!.sections.length - 1) {
-      setIsPlaying(false);
-      router.push(`/listening/${testId}?part=${currentPart + 1}`);
-    }
-  };
-
-  const goToPreviousPart = () => {
-    if (currentPart > 0) {
-      setIsPlaying(false);
-      router.push(`/listening/${testId}?part=${currentPart - 1}`);
-    }
   };
 
   // --- RENDER HELPERS ---
@@ -869,20 +863,12 @@ export default function ListeningTestPage() {
           ))}
 
           <div className="w-px h-6 bg-gray-300"></div>
-
-          {/* Note Button */}
-          <button
-            onClick={openNoteModal}
-            className="w-8 h-8 rounded-full bg-gray-800 text-white hover:bg-gray-900 flex items-center justify-center transition"
-          >
-            <Plus size={16} />
-          </button>
         </div>
       )}
 
       {/* Submit Confirmation Modal */}
       {showSubmitModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-100 p-4">
           <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 border-2 border-[#9C74FF]/30">
             <button
               onClick={() => setShowSubmitModal(false)}
@@ -897,12 +883,27 @@ export default function ListeningTestPage() {
               <p className="text-gray-600 mb-6">
                 Are you sure you want to submit?
               </p>
-              <button
-                onClick={handleSubmit}
-                className="flex-1 px-6 py-3 bg-[#9C74FF] text-white rounded-xl font-semibold hover:bg-[#8B5FE8] shadow-md w-full"
-              >
-                Submit Test
-              </button>
+              {isSubmitting ? (
+                <button
+                  disabled
+                  className="
+    flex-1 px-6 py-3 w-full rounded-xl font-semibold
+    bg-[#9C74FF] text-white
+    shadow-md
+    opacity-60 cursor-not-allowed
+    hover:bg-[#9C74FF]
+  "
+                >
+                  Submitting...
+                </button>
+              ) : (
+                <button
+                  onClick={handleSubmit}
+                  className="flex-1 px-6 py-3 bg-[#9C74FF] text-white rounded-xl font-semibold hover:bg-[#8B5FE8] shadow-md w-full"
+                >
+                  Submit Test
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -1071,10 +1072,12 @@ export default function ListeningTestPage() {
                       const q = questions[i];
 
                       // 1. MAP QUESTIONS
+                      // 1) MAP GROUP
                       if (isMapType(q)) {
                         const mapGroup: any[] = [q];
                         processedQuestions.add(i);
                         const currentImageUrl = q.imageUrl;
+
                         for (let j = i + 1; j < questions.length; j++) {
                           const nextQ = questions[j];
                           if (
@@ -1087,16 +1090,14 @@ export default function ListeningTestPage() {
                           } else break;
                         }
 
-                        // Savollar oralig'ini aniqlash
                         const startQ = mapGroup[0].questionNumber;
                         const endQ =
                           mapGroup[mapGroup.length - 1].questionNumber;
 
                         elements.push(
                           <div key={`map-group-${startQ}`}>
-                            {/* ASOSIY KONTEYNER (Sizning dizayningiz shu yerda) */}
                             <div className="p-6 bg-linear-to-br from-purple-50 to-violet-50 rounded-2xl border-2 border-[#9C74FF]/30 shadow-xl">
-                              {/* --- HEADER (YANGI QO'SHILDI) --- */}
+                              {/* HEADER */}
                               <div className="mb-6 pb-4 border-b border-purple-200">
                                 <h3 className="text-xl font-bold text-[#9C74FF] mb-2 uppercase">
                                   Questions {startQ}-{endQ}
@@ -1107,9 +1108,8 @@ export default function ListeningTestPage() {
                                 </p>
                               </div>
 
-                              {/* --- GRID (CONTENT) --- */}
                               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                {/* Rasm qismi */}
+                                {/* Image */}
                                 <div className="lg:sticky lg:top-24 lg:self-start">
                                   <img
                                     src={currentImageUrl}
@@ -1118,12 +1118,13 @@ export default function ListeningTestPage() {
                                   />
                                 </div>
 
-                                {/* Savollar qismi */}
+                                {/* Questions */}
                                 <div className="space-y-3">
-                                  {mapGroup.map((mq) => (
+                                  {mapGroup.map((mq: any) => (
                                     <div
+                                      id={`q-${mq.questionNumber}`}
                                       key={mq.questionNumber}
-                                      className="group relative bg-white p-4 rounded-xl border border-purple-200"
+                                      className="group relative bg-white p-4 rounded-xl border border-purple-200 scroll-mt-28"
                                     >
                                       <div className="flex items-center gap-3">
                                         <div className="flex-1">
@@ -1131,7 +1132,10 @@ export default function ListeningTestPage() {
                                             const fullText = mq.contextText
                                               ? `${mq.contextText}\n${mq.question}`
                                               : mq.question;
+
                                             const blankPattern = /_{2,}/g;
+
+                                            // ✅ BLANK CASE
                                             if (blankPattern.test(fullText)) {
                                               const parts =
                                                 fullText.split(blankPattern);
@@ -1159,9 +1163,11 @@ export default function ListeningTestPage() {
                                                             )}
                                                           </span>
                                                         )}
+
                                                         {idx <
                                                           parts.length - 1 && (
                                                           <span className="inline-flex items-center gap-1 group">
+                                                            {/* BOOKMARK */}
                                                             <button
                                                               onClick={() =>
                                                                 toggleFlag(
@@ -1188,6 +1194,7 @@ export default function ListeningTestPage() {
                                                               />
                                                             </button>
 
+                                                            {/* INPUT */}
                                                             <input
                                                               type="text"
                                                               placeholder={`${mq.questionNumber}`}
@@ -1207,7 +1214,7 @@ export default function ListeningTestPage() {
                                                               }
                                                             />
 
-                                                            {/* NOTES ICON (to‘g‘ri) */}
+                                                            {/* ✅ NOTES ICON (MAP) */}
                                                             <div
                                                               className={`transition-opacity ${
                                                                 notes[
@@ -1240,70 +1247,97 @@ export default function ListeningTestPage() {
                                                   )}
                                                 </div>
                                               );
-                                            } else {
-                                              return (
-                                                <div className="flex items-center gap-3 group">
-                                                  <p
-                                                    className="text-gray-800 font-medium text-sm cursor-text"
-                                                    onMouseUp={(e) =>
-                                                      handleTextSelection(
-                                                        e,
-                                                        `map-${mq.questionNumber}-text`,
-                                                      )
-                                                    }
-                                                  >
-                                                    {renderTextWithHighlights(
-                                                      fullText,
+                                            }
+
+                                            // ✅ NON-BLANK CASE
+                                            return (
+                                              <div className="flex items-center gap-3 group">
+                                                <p
+                                                  className="text-gray-800 font-medium text-sm cursor-text"
+                                                  onMouseUp={(e) =>
+                                                    handleTextSelection(
+                                                      e,
                                                       `map-${mq.questionNumber}-text`,
-                                                    )}
-                                                  </p>
-                                                  <span className="font-bold text-gray-900 text-sm">
-                                                    {mq.questionNumber}.
-                                                  </span>
-                                                  <button
-                                                    onClick={() =>
-                                                      toggleFlag(
-                                                        mq.questionNumber,
-                                                      )
-                                                    }
-                                                    className={`transition-opacity ${
+                                                    )
+                                                  }
+                                                >
+                                                  {renderTextWithHighlights(
+                                                    fullText,
+                                                    `map-${mq.questionNumber}-text`,
+                                                  )}
+                                                </p>
+
+                                                <span className="font-bold text-gray-900 text-sm">
+                                                  {mq.questionNumber}.
+                                                </span>
+
+                                                {/* BOOKMARK */}
+                                                <button
+                                                  onClick={() =>
+                                                    toggleFlag(
+                                                      mq.questionNumber,
+                                                    )
+                                                  }
+                                                  className={`transition-opacity ${
+                                                    flaggedQuestions.has(
+                                                      mq.questionNumber,
+                                                    )
+                                                      ? "opacity-100"
+                                                      : "opacity-0 group-hover:opacity-100"
+                                                  }`}
+                                                >
+                                                  <Bookmark
+                                                    size={14}
+                                                    className={
                                                       flaggedQuestions.has(
                                                         mq.questionNumber,
                                                       )
-                                                        ? "opacity-100"
-                                                        : "opacity-0 group-hover:opacity-100"
-                                                    }`}
-                                                  >
-                                                    <Bookmark
-                                                      size={14}
-                                                      className={
-                                                        flaggedQuestions.has(
-                                                          mq.questionNumber,
-                                                        )
-                                                          ? "fill-purple-500 text-purple-500"
-                                                          : "text-gray-400 hover:text-purple-500"
-                                                      }
-                                                    />
-                                                  </button>
-                                                  <input
-                                                    type="text"
-                                                    placeholder={`${mq.questionNumber}`}
-                                                    className="inline-block bg-transparent border border-gray-400 rounded-md focus:border-gray-600 focus:ring-0 min-w-20 max-w-40 px-2 py-1 text-sm text-center text-gray-800 placeholder-gray-400 font-medium"
-                                                    value={
-                                                      answers[
+                                                        ? "fill-purple-500 text-purple-500"
+                                                        : "text-gray-400 hover:text-purple-500"
+                                                    }
+                                                  />
+                                                </button>
+
+                                                {/* INPUT */}
+                                                <input
+                                                  type="text"
+                                                  placeholder={`${mq.questionNumber}`}
+                                                  className="inline-block bg-transparent border border-gray-400 rounded-md focus:border-gray-600 focus:ring-0 min-w-20 max-w-40 px-2 py-1 text-sm text-center text-gray-800 placeholder-gray-400 font-medium"
+                                                  value={
+                                                    answers[
+                                                      mq.questionNumber
+                                                    ] || ""
+                                                  }
+                                                  onChange={(e) =>
+                                                    handleAnswerChange(
+                                                      mq.questionNumber,
+                                                      e.target.value,
+                                                    )
+                                                  }
+                                                />
+
+                                                {/* ✅ NOTES ICON (MAP else ham) */}
+                                                <div
+                                                  className={`transition-opacity ${
+                                                    notes[mq.questionNumber]
+                                                      ? "opacity-100"
+                                                      : "opacity-0 group-hover:opacity-100"
+                                                  }`}
+                                                >
+                                                  <QuestionNotes
+                                                    questionNumber={
+                                                      mq.questionNumber
+                                                    }
+                                                    initialNote={
+                                                      notes[
                                                         mq.questionNumber
                                                       ] || ""
                                                     }
-                                                    onChange={(e) =>
-                                                      handleAnswerChange(
-                                                        mq.questionNumber,
-                                                        e.target.value,
-                                                      )
-                                                    }
+                                                    onSaveNote={handleSaveNote}
                                                   />
                                                 </div>
-                                              );
-                                            }
+                                              </div>
+                                            );
                                           })()}
                                         </div>
                                       </div>
@@ -1316,10 +1350,11 @@ export default function ListeningTestPage() {
                         );
                       }
 
-                      // 2. NOTE/FORM/SENTENCE QUESTIONS
+                      // 2) NOTE/FORM/SENTENCE QUESTIONS
                       else if (isNoteType(q.questionType)) {
                         const noteGroup: any[] = [q];
                         processedQuestions.add(i);
+
                         for (let j = i + 1; j < questions.length; j++) {
                           const nextQ = questions[j];
                           if (isNoteType(nextQ.questionType)) {
@@ -1329,22 +1364,18 @@ export default function ListeningTestPage() {
                           } else break;
                         }
 
-                        // Savollar oralig'ini aniqlash (1-10)
                         const startQ = noteGroup[0].questionNumber;
                         const endQ =
                           noteGroup[noteGroup.length - 1].questionNumber;
 
                         elements.push(
                           <div key={`note-group-${startQ}`}>
-                            {/* ASOSIY KONTEYNER: O'zingizning eski Purple Gradient dizayningiz */}
                             <div className="bg-white border-2 border-gray-400 rounded-lg shadow-lg p-8 mb-8 relative font-serif text-gray-900">
-                              {/* --- HEADER (YANGI QO'SHILDI) --- */}
+                              {/* HEADER */}
                               <div className="text-center border-b-2 border-gray-800 pb-3 mb-6">
-                                {/* Sarlavha (Section Title) */}
                                 <h2 className="text-2xl font-bold uppercase tracking-wide text-gray-900 mb-2">
                                   {currentSection.title}
                                 </h2>
-                                {/* Questions X-Y */}
                                 <p className="text-lg font-bold text-gray-800">
                                   Questions {startQ}-{endQ}
                                 </p>
@@ -1362,6 +1393,7 @@ export default function ListeningTestPage() {
                                     questionText.match(/^(\d+)\.\s*/);
                                   let numberPart = null;
                                   let textPart = questionText;
+
                                   if (numberMatch) {
                                     numberPart = numberMatch[1];
                                     textPart = questionText.substring(
@@ -1371,13 +1403,14 @@ export default function ListeningTestPage() {
 
                                   return (
                                     <div
+                                      id={`q-${nq.questionNumber}`}
                                       key={nq.questionNumber}
-                                      className="relative group/item"
+                                      className="relative group/item scroll-mt-28"
                                     >
-                                      {/* CONTEXT TEXT */}
+                                      {/* CONTEXT */}
                                       {nq.contextText && (
                                         <div
-                                          className=" text-gray-800 text-lg whitespace-pre-wrap  font-medium cursor-text"
+                                          className="text-gray-800 text-lg whitespace-pre-wrap font-medium cursor-text"
                                           onMouseUp={(e) =>
                                             handleTextSelection(
                                               e,
@@ -1399,6 +1432,7 @@ export default function ListeningTestPage() {
                                             {numberPart}.
                                           </span>
                                         )}
+
                                         <div className="flex-1 flex flex-wrap items-baseline gap-x-2 gap-y-1">
                                           {(() => {
                                             const blankPattern = /_{2,}/g;
@@ -1432,9 +1466,11 @@ export default function ListeningTestPage() {
                                                             )}
                                                           </span>
                                                         )}
+
                                                         {idx <
                                                           parts.length - 1 && (
                                                           <span className="inline-flex items-center gap-1 group">
+                                                            {/* BOOKMARK */}
                                                             <button
                                                               onClick={() =>
                                                                 toggleFlag(
@@ -1446,7 +1482,7 @@ export default function ListeningTestPage() {
                                                                   nq.questionNumber,
                                                                 )
                                                                   ? "opacity-100"
-                                                                  : "opacity-0 group-hover:opacity-100"
+                                                                  : "opacity-0 group-hover/item:opacity-100"
                                                               }`}
                                                             >
                                                               <Bookmark
@@ -1461,6 +1497,7 @@ export default function ListeningTestPage() {
                                                               />
                                                             </button>
 
+                                                            {/* INPUT */}
                                                             <input
                                                               type="text"
                                                               placeholder={`${nq.questionNumber}`}
@@ -1480,7 +1517,7 @@ export default function ListeningTestPage() {
                                                               }
                                                             />
 
-                                                            {/* NOTES ICON (to‘g‘ri) */}
+                                                            {/* ✅ NOTES ICON (NOTE) */}
                                                             <div
                                                               className={`transition-opacity ${
                                                                 notes[
@@ -1488,7 +1525,7 @@ export default function ListeningTestPage() {
                                                                     .questionNumber
                                                                 ]
                                                                   ? "opacity-100"
-                                                                  : "opacity-0 group-hover:opacity-100"
+                                                                  : "opacity-0 group-hover/item:opacity-100"
                                                               }`}
                                                             >
                                                               <QuestionNotes
@@ -1513,24 +1550,24 @@ export default function ListeningTestPage() {
                                                   )}
                                                 </>
                                               );
-                                            } else {
-                                              return (
-                                                <span
-                                                  className="font-medium cursor-text"
-                                                  onMouseUp={(e) =>
-                                                    handleTextSelection(
-                                                      e,
-                                                      `question-${nq.questionNumber}-full`,
-                                                    )
-                                                  }
-                                                >
-                                                  {renderTextWithHighlights(
-                                                    textPart,
-                                                    `question-${nq.questionNumber}-full`,
-                                                  )}
-                                                </span>
-                                              );
                                             }
+
+                                            return (
+                                              <span
+                                                className="font-medium cursor-text"
+                                                onMouseUp={(e) =>
+                                                  handleTextSelection(
+                                                    e,
+                                                    `question-${nq.questionNumber}-full`,
+                                                  )
+                                                }
+                                              >
+                                                {renderTextWithHighlights(
+                                                  textPart,
+                                                  `question-${nq.questionNumber}-full`,
+                                                )}
+                                              </span>
+                                            );
                                           })()}
                                         </div>
                                       </div>
@@ -1543,11 +1580,15 @@ export default function ListeningTestPage() {
                         );
                       }
 
-                      // 3. STANDARD QUESTIONS (MCQ)
+                      // 3) STANDARD QUESTIONS (MCQ)
                       else {
                         processedQuestions.add(i);
                         elements.push(
-                          <div key={q.questionNumber}>
+                          <div
+                            id={`q-${q.questionNumber}`}
+                            key={q.questionNumber}
+                            className="scroll-mt-28"
+                          >
                             <div className="group relative bg-gray-50 rounded-xl p-5 border border-gray-200 hover:border-[#9C74FF] transition-all mb-4">
                               <div className="flex gap-4">
                                 <div className="flex items-start gap-2 shrink-0">
@@ -1555,7 +1596,11 @@ export default function ListeningTestPage() {
                                     {q.questionNumber}.
                                   </span>
                                   <div
-                                    className={`mt-1 transition-all ${notes[q.questionNumber] ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
+                                    className={`mt-1 transition-all ${
+                                      notes[q.questionNumber]
+                                        ? "opacity-100"
+                                        : "opacity-0 group-hover:opacity-100"
+                                    }`}
                                   >
                                     <QuestionNotes
                                       questionNumber={q.questionNumber}
@@ -1566,6 +1611,7 @@ export default function ListeningTestPage() {
                                     />
                                   </div>
                                 </div>
+
                                 <div className="flex-1">
                                   <p
                                     className="text-gray-800 mb-3 font-medium cursor-text"
@@ -1589,7 +1635,12 @@ export default function ListeningTestPage() {
                                           (opt: string, idx: number) => (
                                             <label
                                               key={idx}
-                                              className={`flex items-center gap-3 p-3 border-2 rounded-lg cursor-pointer ${answers[q.questionNumber] === opt ? "bg-purple-50 border-[#9C74FF]" : "border-gray-200 hover:bg-gray-100"}`}
+                                              className={`flex items-center gap-3 p-3 border-2 rounded-lg cursor-pointer ${
+                                                answers[q.questionNumber] ===
+                                                opt
+                                                  ? "bg-purple-50 border-[#9C74FF]"
+                                                  : "border-gray-200 hover:bg-gray-100"
+                                              }`}
                                             >
                                               <input
                                                 type="radio"
@@ -1613,6 +1664,7 @@ export default function ListeningTestPage() {
                                         )}
                                       </div>
                                     )}
+
                                   {q.questionType === "matching" &&
                                     q.options && (
                                       <select
@@ -1652,40 +1704,13 @@ export default function ListeningTestPage() {
       </div>
 
       {/* Footer & Modals */}
-      <div className="bg-white border-t-2 border-purple-100 shrink-0 shadow-lg z-30 fixed bottom-0 w-full">
-        <div className="max-w-full mx-auto px-6 py-2.5 flex items-center justify-between">
-          <div className="flex gap-2">
-            {test.sections.map((_: any, idx: number) => (
-              <button
-                key={idx}
-                onClick={() => {
-                  setIsPlaying(false);
-                  router.push(`/listening/${testId}?part=${idx}`);
-                }}
-                className={`px-4 py-1.5 rounded-lg font-bold text-sm transition-all ${idx === currentPart ? "bg-[#9C74FF] text-white" : "bg-gray-100"}`}
-              >
-                {idx + 1}
-              </button>
-            ))}
-          </div>
-          <div className="flex gap-3">
-            <button
-              onClick={goToPreviousPart}
-              disabled={currentPart === 0}
-              className="px-6 py-1.5 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-50"
-            >
-              Previous
-            </button>
-            <button
-              onClick={goToNextPart}
-              disabled={currentPart === test.sections.length - 1}
-              className="px-6 py-1.5 bg-[#9C74FF] text-white rounded-lg text-sm hover:bg-purple-600 disabled:opacity-50"
-            >
-              Next
-            </button>
-          </div>
-        </div>
-      </div>
+      <ListeningFooterNav
+        test={test}
+        testId={testId}
+        currentPart={currentPart}
+        answers={answers}
+        flaggedQuestions={flaggedQuestions}
+      />
     </div>
   );
 }
