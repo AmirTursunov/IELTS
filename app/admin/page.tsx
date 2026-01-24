@@ -6,18 +6,29 @@ import { TestsContent } from "../components/admin/TestContent";
 import { UsersContent } from "../components/admin/UserContent";
 import { ComingSoonContent } from "../components/admin/Soon";
 import {
-  ActiveSection,
+  ActiveSection, // <--- types/index.ts da ActiveSection ga 'activity' ni qo'shish kerak!
   Stats,
   ReadingTest,
   ListeningTest,
   ApiResponse,
 } from "../../types/index";
+import { ActivityContent } from "../components/admin/ActivityContent";
 
 const API_BASE = "/api";
 
+interface ActivityItem {
+  type: "test" | "user" | "review";
+  action: string;
+  subject: string;
+  createdAt: string;
+}
+
 export default function IELTSAdminPanel(): React.ReactElement {
-  const [activeSection, setActiveSection] =
-    useState<ActiveSection>("dashboard");
+  // Typescript "activity" ni tanimasa, types faylida update qilish kerak
+  const [activeSection, setActiveSection] = useState<
+    ActiveSection | "activity"
+  >("dashboard");
+
   const [tests, setTests] = useState<Array<ReadingTest | ListeningTest>>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [stats, setStats] = useState<Stats>({
@@ -25,36 +36,26 @@ export default function IELTSAdminPanel(): React.ReactElement {
     totalListeningTests: 0,
     totalTests: 0,
   });
+  const [activities, setActivities] = useState<ActivityItem[]>([]);
+
   useEffect(() => {
     if (activeSection === "dashboard") {
       fetchDashboardData();
     } else if (activeSection === "reading" || activeSection === "listening") {
       fetchTests();
     }
+    // Activity bo'limi o'z ichida fetch qiladi (ActivityContent.tsx)
   }, [activeSection]);
 
   const fetchDashboardData = async (): Promise<void> => {
     setLoading(true);
     try {
-      const [readingRes, listeningRes] = await Promise.all([
-        fetch(`${API_BASE}/reading`),
-        fetch(`${API_BASE}/listening`),
-      ]);
-
-      const readingData: ApiResponse<ReadingTest[]> = await readingRes.json();
-      const listeningData: ApiResponse<ListeningTest[]> =
-        await listeningRes.json();
-
-      const readingCount = readingData.success ? readingData.data.length : 0;
-      const listeningCount = listeningData.success
-        ? listeningData.data.length
-        : 0;
-
-      setStats({
-        totalReadingTests: readingCount,
-        totalListeningTests: listeningCount,
-        totalTests: readingCount + listeningCount,
-      });
+      const response = await fetch(`${API_BASE}/dashboard`);
+      const data = await response.json();
+      if (data.success) {
+        setStats(data.stats);
+        setActivities(data.activities);
+      }
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
     } finally {
@@ -89,7 +90,6 @@ export default function IELTSAdminPanel(): React.ReactElement {
 
   const handleDelete = async (id: string): Promise<void> => {
     if (!window.confirm("Bu testni o'chirmoqchimisiz?")) return;
-
     try {
       const endpoint =
         activeSection === "reading"
@@ -113,15 +113,24 @@ export default function IELTSAdminPanel(): React.ReactElement {
 
   return (
     <div className="flex h-screen bg-gray-50">
+      {/* Sidebar o'zgarmadi, lekin unga ham Activity button qo'shish mumkin */}
       <Sidebar
-        activeSection={activeSection}
+        activeSection={activeSection as ActiveSection}
         onSectionChange={setActiveSection}
       />
 
       <div className="flex-1 overflow-auto bg-white">
         {activeSection === "dashboard" && (
-          <DashboardContent stats={stats} loading={loading} />
+          <DashboardContent
+            stats={stats}
+            activities={activities}
+            loading={loading}
+            onViewAll={() => setActiveSection("activity")} // <--- O'TISH FUNKSIYASI
+          />
         )}
+
+        {/* --- YANGI COMPONENT RENDERI --- */}
+        {activeSection === "activity" && <ActivityContent />}
 
         {(activeSection === "reading" || activeSection === "listening") && (
           <TestsContent

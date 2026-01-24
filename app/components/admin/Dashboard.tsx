@@ -6,22 +6,57 @@ import {
   FileText,
   TrendingUp,
   Clock,
+  User,
+  MessageSquare,
+  Activity,
+  ArrowRight,
 } from "lucide-react";
 import { Stats } from "@/types";
 
+interface ActivityItem {
+  type: "test" | "user" | "review";
+  action: string;
+  subject: string;
+  createdAt: string;
+}
+
 interface DashboardContentProps {
   stats: Stats;
+  activities?: ActivityItem[];
   loading: boolean;
+  onViewAll?: () => void;
+}
+
+// Vaqtni chiroyli ko'rsatish funksiyasi
+function timeAgo(dateString: string) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+  if (seconds < 60) return "Just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes} mins ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} hours ago`;
+  const days = Math.floor(hours / 24);
+  return `${days} days ago`;
 }
 
 export const DashboardContent: FC<DashboardContentProps> = ({
-  stats,
+  // Agar stats undefined kelsa, default qiymat beramiz (Himoya)
+  stats = {
+    totalTests: 0,
+    totalReadingTests: 0,
+    totalListeningTests: 0,
+  },
+  activities = [],
   loading,
+  onViewAll,
 }) => {
   const statCards = [
     {
       label: "Total Tests",
-      value: stats.totalTests,
+      value: stats.totalTests, // Endi bu yerda xatolik bo'lmaydi
       icon: FileText,
       color: "blue",
     },
@@ -45,6 +80,22 @@ export const DashboardContent: FC<DashboardContentProps> = ({
     },
   ];
 
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case "test":
+        return <FileText size={20} className="text-blue-600" />;
+      case "user":
+        return <User size={20} className="text-green-600" />;
+      case "review":
+        return <MessageSquare size={20} className="text-purple-600" />;
+      default:
+        return <Activity size={20} className="text-gray-600" />;
+    }
+  };
+
+  // Faqat oxirgi 3 ta aktivlikni olamiz
+  const displayedActivities = activities.slice(0, 3);
+
   return (
     <div className="p-8">
       <div className="mb-8">
@@ -58,17 +109,19 @@ export const DashboardContent: FC<DashboardContentProps> = ({
         </div>
       ) : (
         <>
+          {/* STATS CARDS */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             {statCards.map((card) => {
               const Icon = card.icon;
+              const colorClasses = {
+                blue: "bg-blue-100 text-blue-600",
+                green: "bg-green-100 text-green-600",
+                purple: "bg-purple-100 text-purple-600",
+                orange: "bg-orange-100 text-orange-600",
+              };
               const bgClass =
-                card.color === "blue"
-                  ? "bg-blue-100 text-blue-600"
-                  : card.color === "green"
-                  ? "bg-green-100 text-green-600"
-                  : card.color === "purple"
-                  ? "bg-purple-100 text-purple-600"
-                  : "bg-orange-100 text-orange-600";
+                colorClasses[card.color as keyof typeof colorClasses] ||
+                "bg-gray-100 text-gray-600";
 
               return (
                 <div
@@ -90,47 +143,55 @@ export const DashboardContent: FC<DashboardContentProps> = ({
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
-              <h3 className="text-xl font-bold text-gray-800 mb-4">
-                Recent Activity
-              </h3>
-              <div className="space-y-3">
-                {[
-                  {
-                    action: "New test created",
-                    test: "Reading Test",
-                    time: "2 hours ago",
-                  },
-                  {
-                    action: "Test updated",
-                    test: "Listening Test",
-                    time: "5 hours ago",
-                  },
-                  {
-                    action: "User registered",
-                    test: "New user",
-                    time: "1 day ago",
-                  },
-                ].map((activity, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg border border-gray-100"
+            {/* RECENT ACTIVITY */}
+            <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm flex flex-col h-full">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-bold text-gray-800">
+                  Recent Activity
+                </h3>
+                {onViewAll && (
+                  <button
+                    onClick={onViewAll}
+                    className="text-blue-600 text-sm font-semibold hover:text-blue-700 flex items-center gap-1 transition-colors"
                   >
-                    <Clock className="text-blue-600" size={20} />
-                    <div className="flex-1">
-                      <p className="text-gray-800 text-sm font-medium">
-                        {activity.action}
-                      </p>
-                      <p className="text-gray-500 text-xs">{activity.test}</p>
+                    View All <ArrowRight size={16} />
+                  </button>
+                )}
+              </div>
+
+              <div className="space-y-3 flex-1">
+                {displayedActivities.length === 0 ? (
+                  <p className="text-gray-500 text-sm text-center py-4">
+                    No recent activity.
+                  </p>
+                ) : (
+                  displayedActivities.map((activity, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg border border-gray-100 hover:bg-gray-100 transition-colors"
+                    >
+                      <div className="p-2 bg-white rounded-full border border-gray-200 shadow-sm">
+                        {getActivityIcon(activity.type)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-gray-800 text-sm font-semibold truncate">
+                          {activity.action}
+                        </p>
+                        <p className="text-gray-500 text-xs truncate">
+                          {activity.subject}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1 text-gray-400 text-xs whitespace-nowrap">
+                        <Clock size={12} />
+                        <span>{timeAgo(activity.createdAt)}</span>
+                      </div>
                     </div>
-                    <span className="text-gray-400 text-xs">
-                      {activity.time}
-                    </span>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
 
+            {/* QUICK STATS */}
             <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
               <h3 className="text-xl font-bold text-gray-800 mb-4">
                 Quick Stats
