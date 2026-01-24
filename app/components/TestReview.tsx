@@ -5,10 +5,11 @@ import { X, Sparkles, Star, Check, AlertTriangle } from "lucide-react";
 
 type Props = {
   isOpen: boolean;
-  onClose: () => void;
+  onClose: () => void; // Redirect yoki yopish logikasi parentda bo'ladi
   testId: string;
   userId?: string;
-  testType?: string; // <--- YANGI PROP
+  // MUHIM: Endi bu majburiy! Har bir joyda aniq berilishi kerak.
+  testType: "listening" | "reading" | "writing" | "speaking" | string;
   endpoint?: string;
   title?: string;
 };
@@ -22,7 +23,7 @@ export default function ReviewModal({
   onClose,
   testId,
   userId = "anonymous",
-  testType = "listening", // <--- Default qiymat
+  testType, // Default qiymat olib tashlandi, endi u propsdan keladi
   endpoint = "/api/review",
   title = "Leave a Review",
 }: Props) {
@@ -54,7 +55,7 @@ export default function ReviewModal({
       const payload = {
         testId,
         userId,
-        testType, // <--- API ga yuborilyapti
+        testType, // Props orqali kelgan to'g'ri turni yuboramiz
         rating: clamp(rating, 1, 5),
         comment: comment.trim(),
         pageUrl: typeof window !== "undefined" ? window.location.href : "",
@@ -76,6 +77,7 @@ export default function ReviewModal({
       setMessage("Thanks! Redirecting...");
       setComment("");
 
+      // Muvaffaqiyatli bo'lgach, 1.5 soniyadan keyin yopiladi
       setTimeout(() => {
         onClose();
       }, 1500);
@@ -97,8 +99,12 @@ export default function ReviewModal({
 
   return (
     <div className="fixed inset-0 z-999 flex items-center justify-center p-4">
+      {/* Backdrop */}
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+
+      {/* Modal Content */}
       <div className="relative w-full max-w-lg rounded-2xl bg-white border border-gray-200 shadow-2xl overflow-hidden z-10 transform transition-all scale-100">
+        {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 bg-gray-50 border-b border-gray-100">
           <h2 className="text-lg font-bold text-gray-900">{title}</h2>
           <button
@@ -108,6 +114,8 @@ export default function ReviewModal({
             <X className="w-5 h-5" />
           </button>
         </div>
+
+        {/* Banner */}
         <div className="px-5 pt-5">
           <div className="rounded-2xl border border-purple-200 bg-purple-50 px-4 py-3 flex items-start gap-3">
             <div className="mt-0.5 rounded-xl bg-white border border-purple-200 p-2 shadow-sm">
@@ -118,11 +126,13 @@ export default function ReviewModal({
                 Help us improve!
               </p>
               <p className="text-xs text-purple-800/80 mt-0.5">
-                Your feedback helps other students choose the best tests.
+                Your feedback helps us improve our {testType} tests.
               </p>
             </div>
           </div>
         </div>
+
+        {/* Body */}
         <div className="px-5 py-5">
           {status && (
             <div
@@ -136,6 +146,8 @@ export default function ReviewModal({
               <span className="font-medium">{message}</span>
             </div>
           )}
+
+          {/* Stars */}
           <div className="mb-5 text-center">
             <div className="flex items-center justify-center gap-2 mb-2">
               {Array.from({ length: 5 }).map((_, i) => {
@@ -161,11 +173,13 @@ export default function ReviewModal({
               {displayRating} out of 5
             </p>
           </div>
+
+          {/* Comment */}
           <div className="mb-5">
             <textarea
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              placeholder="What did you like or dislike about this test?"
+              placeholder={`What did you like about this ${testType} test?`}
               className="w-full h-28 resize-none rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#9C74FF]/50 focus:border-[#9C74FF] transition-all bg-gray-50 focus:bg-white"
             />
             <div className="flex justify-between mt-1 px-1">
@@ -177,6 +191,8 @@ export default function ReviewModal({
               </span>
             </div>
           </div>
+
+          {/* Buttons */}
           <div className="flex gap-3 pt-2">
             <button
               onClick={handleSkip}

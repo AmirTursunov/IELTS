@@ -15,6 +15,8 @@ import {
   RotateCcw,
   Info,
 } from "lucide-react";
+import { useSession } from "next-auth/react";
+import ReviewModal from "@/app/components/TestReview";
 
 const API_BASE = "/api";
 
@@ -23,6 +25,7 @@ export default function ReadingTestPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
+  const { data: session } = useSession();
   const testId = params?.id as string;
   const currentPart = parseInt(searchParams?.get("part") || "0");
 
@@ -32,7 +35,7 @@ export default function ReadingTestPage() {
   const [timeRemaining, setTimeRemaining] = useState(3600);
   const [answers, setAnswers] = useState<{ [key: number]: string }>({});
   const [flaggedQuestions, setFlaggedQuestions] = useState<Set<number>>(
-    new Set()
+    new Set(),
   );
   const [showResult, setShowResult] = useState(false);
   const [result, setResult] = useState<any>(null);
@@ -44,7 +47,7 @@ export default function ReadingTestPage() {
   const [infoModal, setInfoModal] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const passageContainerRef = useRef<HTMLDivElement>(null);
-
+  const [reviewOpen, setReviewOpen] = useState(false);
   const [highlights, setHighlights] = useState<{
     [passageNumber: number]: {
       start: number;
@@ -166,7 +169,7 @@ export default function ReadingTestPage() {
       if (result.success) {
         setTest(result.data);
         setTimeRemaining(
-          result.data.timeLimit ? result.data.timeLimit * 60 : 3600
+          result.data.timeLimit ? result.data.timeLimit * 60 : 3600,
         );
       } else {
         setError(result.error || "Failed to load test");
@@ -494,8 +497,8 @@ export default function ReadingTestPage() {
                     test.difficulty === "Easy"
                       ? "text-green-600"
                       : test.difficulty === "Medium"
-                      ? "text-yellow-600"
-                      : "text-red-600"
+                        ? "text-yellow-600"
+                        : "text-red-600"
                   }`}
                 >
                   {test.difficulty}
@@ -620,8 +623,8 @@ export default function ReadingTestPage() {
                       detail.status === "correct"
                         ? "bg-linear-to-r from-green-50 to-emerald-50 border-green-300"
                         : detail.status === "incorrect"
-                        ? "bg-linear-to-r from-red-50 to-rose-50 border-red-300"
-                        : "bg-linear-to-r from-gray-50 to-slate-50 border-gray-300"
+                          ? "bg-linear-to-r from-red-50 to-rose-50 border-red-300"
+                          : "bg-linear-to-r from-gray-50 to-slate-50 border-gray-300"
                     }`}
                   >
                     <div className="flex items-start gap-4">
@@ -677,7 +680,7 @@ export default function ReadingTestPage() {
 
             <div className="p-8 bg-linear-to-r from-gray-50 to-slate-50 flex gap-4 justify-center border-t border-gray-200">
               <button
-                onClick={() => router.push("/")}
+                onClick={() => setReviewOpen(true)}
                 className="px-10 py-4 bg-gray-600 text-white rounded-xl hover:bg-gray-700 font-semibold shadow-lg transition-all flex items-center gap-2"
               >
                 <ChevronLeft size={20} />
@@ -691,6 +694,18 @@ export default function ReadingTestPage() {
                 Retake Test
               </button>
             </div>
+            {reviewOpen && (
+              <ReviewModal
+                isOpen={reviewOpen}
+                onClose={() => {
+                  setReviewOpen(false);
+                  router.push("/reading");
+                }}
+                testId={String(testId)}
+                userId={session?.user?.id || "anonymous"}
+                testType="reading"
+              />
+            )}
           </div>
         </div>
       </div>
@@ -743,7 +758,7 @@ export default function ReadingTestPage() {
               {h.note}
             </span>
           )}
-        </span>
+        </span>,
       );
       last = h.end;
     });
@@ -785,7 +800,7 @@ export default function ReadingTestPage() {
                 <strong>Answered:</strong> {Object.keys(answers).length} /{" "}
                 {test.passages.reduce(
                   (acc: number, p: any) => acc + p.questions.length,
-                  0
+                  0,
                 )}{" "}
                 questions
               </p>
@@ -1183,7 +1198,7 @@ export default function ReadingTestPage() {
                                               onChange={(e) =>
                                                 handleAnswerChange(
                                                   question.questionNumber,
-                                                  e.target.value
+                                                  e.target.value,
                                                 )
                                               }
                                             />
@@ -1209,7 +1224,7 @@ export default function ReadingTestPage() {
                                         onChange={(e) =>
                                           handleAnswerChange(
                                             question.questionNumber,
-                                            e.target.value
+                                            e.target.value,
                                           )
                                         }
                                       />
@@ -1248,7 +1263,7 @@ export default function ReadingTestPage() {
                                           onChange={(e) =>
                                             handleAnswerChange(
                                               question.questionNumber,
-                                              e.target.value
+                                              e.target.value,
                                             )
                                           }
                                           className="w-5 h-5 text-purple-600 focus:ring-2 focus:ring-purple-500"
@@ -1257,7 +1272,7 @@ export default function ReadingTestPage() {
                                           {option}
                                         </span>
                                       </label>
-                                    )
+                                    ),
                                   )}
                                 </div>
                               )}
@@ -1287,7 +1302,7 @@ export default function ReadingTestPage() {
                                         onChange={(e) =>
                                           handleAnswerChange(
                                             question.questionNumber,
-                                            e.target.value
+                                            e.target.value,
                                           )
                                         }
                                         className="w-3 h-3 text-purple-600 focus:ring-2 focus:ring-purple-500"
@@ -1296,7 +1311,7 @@ export default function ReadingTestPage() {
                                         {option}
                                       </span>
                                     </label>
-                                  )
+                                  ),
                                 )}
                               </div>
                             )}
@@ -1309,7 +1324,7 @@ export default function ReadingTestPage() {
                                   onChange={(e) =>
                                     handleAnswerChange(
                                       question.questionNumber,
-                                      e.target.value
+                                      e.target.value,
                                     )
                                   }
                                 >
@@ -1321,7 +1336,7 @@ export default function ReadingTestPage() {
                                       <option key={idx} value={option}>
                                         {option}
                                       </option>
-                                    )
+                                    ),
                                   )}
                                 </select>
                               )}
@@ -1370,16 +1385,16 @@ export default function ReadingTestPage() {
                     <div className="space-y-3">
                       {notesInPassage.map((highlight, idx) => {
                         const passage = test.passages.find(
-                          (p: any) => p.passageNumber === parseInt(passageNum)
+                          (p: any) => p.passageNumber === parseInt(passageNum),
                         );
                         const highlightedText = passage
                           ? passage.content.slice(
                               highlight.start,
-                              highlight.end
+                              highlight.end,
                             )
                           : "";
                         const color = HIGHLIGHT_COLORS.find(
-                          (c) => c.name === highlight.color
+                          (c) => c.name === highlight.color,
                         );
 
                         return (
@@ -1401,11 +1416,11 @@ export default function ReadingTestPage() {
                     </div>
                   </div>
                 );
-              }
+              },
             )}
 
             {Object.values(highlights).every(
-              (h) => h.filter((item) => item.note).length === 0
+              (h) => h.filter((item) => item.note).length === 0,
             ) && (
               <div className="text-center py-12">
                 <div className="text-6xl mb-4">📝</div>

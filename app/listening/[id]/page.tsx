@@ -1800,6 +1800,7 @@ export default function ListeningTestPage() {
       {/* Review Modal */}
       {reviewOpen && (
         <ReviewModal
+          testType="listening"
           isOpen={reviewOpen}
           onClose={() => {
             setReviewOpen(false);
