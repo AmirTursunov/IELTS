@@ -1,4 +1,3 @@
-// components/admin/EditListeningModal.tsx
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -13,9 +12,25 @@ import {
   Check,
   Plus,
   Trash2,
+  Info, // <--- Icon
 } from "lucide-react";
 
 const API_BASE = "/api";
+
+// --- YANGI: KENG TARQALGAN INSTRUKSIYALAR ---
+const COMMON_INSTRUCTIONS = [
+  "Write NO MORE THAN ONE WORD for each answer.",
+  "Write NO MORE THAN ONE WORD AND/OR A NUMBER for each answer.",
+  "Write NO MORE THAN TWO WORDS AND/OR A NUMBER for each answer.",
+  "Write NO MORE THAN THREE WORDS for each answer.",
+  "Choose the correct letter, A, B, or C.",
+  "Choose TWO letters, A-E.",
+  "Label the map below. Write the correct letter, A-G, next to Questions.",
+  "Complete the notes below.",
+  "Complete the table below.",
+  "Complete the flow-chart below.",
+  "Answer the questions below.",
+];
 
 type QuestionType =
   | "multiple-choice"
@@ -37,6 +52,8 @@ interface Question {
   correctAnswer: string;
   points: number;
   imageUrl?: string;
+  contextText?: string; // contextText ham kerak
+  instruction?: string; // <--- YANGI FIELD
 }
 
 interface QuestionGroup {
@@ -44,6 +61,7 @@ interface QuestionGroup {
   type: QuestionType;
   count: number;
   sharedImageUrl?: string;
+  instruction?: string; // <--- YANGI FIELD
   questions: Question[];
 }
 
@@ -112,6 +130,7 @@ export function EditListeningModal({
         if (result.success) {
           const sectionsWithGroups = result.data.sections.map(
             (section: any) => {
+              // Agar avvaldan groups bo'lsa (backend saqlagan bo'lsa), shuni ishlatamiz
               if (section.questionGroups?.length > 0) {
                 return {
                   ...section,
@@ -119,31 +138,49 @@ export function EditListeningModal({
                 };
               }
 
+              // Agar flat list (questions array) bo'lsa, ularni qayta guruhlaymiz
               const groups: QuestionGroup[] = [];
-              const questions = section.questions || [];
+              const questions: Question[] = section.questions || [];
 
-              const byType: { [key: string]: Question[] } = {};
-              questions.forEach((q: Question) => {
-                if (!byType[q.questionType]) byType[q.questionType] = [];
-                byType[q.questionType].push(q);
-              });
+              if (questions.length > 0) {
+                let currentGroup: QuestionGroup | null = null;
 
-              Object.entries(byType).forEach(([type, qs]) => {
-                groups.push({
-                  id: `group-${type}-${Date.now() + Math.random()}`,
-                  type: type as QuestionType,
-                  count: qs.length,
-                  sharedImageUrl: qs[0]?.imageUrl,
-                  questions: qs,
+                questions.forEach((q) => {
+                  // MANTIQ: Agar type o'zgarsa YOKI instruction o'zgarsa -> yangi guruh
+                  const isTypeChanged =
+                    !currentGroup || currentGroup.type !== q.questionType;
+                  const isInstructionChanged =
+                    !currentGroup ||
+                    (currentGroup.instruction || "") !== (q.instruction || "");
+
+                  if (isTypeChanged || isInstructionChanged) {
+                    if (currentGroup) groups.push(currentGroup);
+
+                    currentGroup = {
+                      id: `group-${Date.now()}-${Math.random()}`,
+                      type: q.questionType,
+                      count: 0,
+                      instruction: q.instruction || "", // Instruksiyani olamiz
+                      sharedImageUrl: q.imageUrl,
+                      questions: [],
+                    };
+                  }
+
+                  if (currentGroup) {
+                    currentGroup.questions.push(q);
+                    currentGroup.count++;
+                  }
                 });
-              });
+
+                if (currentGroup) groups.push(currentGroup);
+              }
 
               return {
                 ...section,
                 questionGroups: groups,
                 totalQuestions: questions.length,
               };
-            }
+            },
           );
 
           setFormData({
@@ -170,7 +207,7 @@ export function EditListeningModal({
   const updateSection = (
     sectionIdx: number,
     field: keyof Section,
-    value: any
+    value: any,
   ) => {
     if (!formData) return;
     const sections = [...formData.sections];
@@ -183,7 +220,7 @@ export function EditListeningModal({
     sectionIdx: number,
     groupIdx: number,
     field: keyof QuestionGroup,
-    value: any
+    value: any,
   ) => {
     if (!formData) return;
     const sections = [...formData.sections];
@@ -209,6 +246,7 @@ export function EditListeningModal({
             options: needsOptions ? ["", "", "", ""] : undefined,
             points: 1,
             questionType: group.type,
+            instruction: group.instruction, // Yangi savolga guruh instruksiyasini beramiz
           });
         }
       } else {
@@ -230,10 +268,22 @@ export function EditListeningModal({
     });
   };
 
+  // --- YANGI: INSTRUCTION UPDATE ---
+  const updateGroupInstruction = (
+    sectionIdx: number,
+    groupIdx: number,
+    value: string,
+  ) => {
+    if (!formData) return;
+    const sections = [...formData.sections];
+    sections[sectionIdx].questionGroups[groupIdx].instruction = value;
+    setFormData({ ...formData, sections });
+  };
+
   const updateGroupType = (
     sectionIdx: number,
     groupIdx: number,
-    newType: QuestionType
+    newType: QuestionType,
   ) => {
     if (!formData) return;
     const sections = [...formData.sections];
@@ -243,6 +293,14 @@ export function EditListeningModal({
       newType === "multiple-choice" || newType === "matching";
 
     group.type = newType;
+
+    // Default instruction
+    if (newType === "multiple-choice")
+      group.instruction = "Choose the correct letter, A, B, or C.";
+    else if (newType === "plan-map-diagram")
+      group.instruction = "Label the plan below.";
+    else group.instruction = "Write NO MORE THAN ONE WORD for each answer.";
+
     group.questions = group.questions.map((q) => ({
       ...q,
       options: needsOptions ? q.options || ["", "", "", ""] : undefined,
@@ -255,8 +313,8 @@ export function EditListeningModal({
     sectionIdx: number,
     groupIdx: number,
     qIdx: number,
-    field: "question" | "correctAnswer",
-    value: string
+    field: "question" | "correctAnswer" | "contextText",
+    value: string,
   ) => {
     if (!formData) return;
     const sections = [...formData.sections];
@@ -270,7 +328,7 @@ export function EditListeningModal({
     groupIdx: number,
     qIdx: number,
     optIdx: number,
-    value: string
+    value: string,
   ) => {
     if (!formData) return;
     const sections = [...formData.sections];
@@ -295,6 +353,8 @@ export function EditListeningModal({
       id: `group-${Date.now()}`,
       type: "short-answer",
       count: defaultCount,
+      instruction:
+        "Write NO MORE THAN ONE WORD and/or A NUMBER for each answer.",
       questions: Array(defaultCount)
         .fill(null)
         .map(() => ({
@@ -332,7 +392,7 @@ export function EditListeningModal({
 
   const handleAudioUpload = async (
     sectionIdx: number,
-    e: React.ChangeEvent<HTMLInputElement>
+    e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -366,7 +426,7 @@ export function EditListeningModal({
   const handleImageUpload = async (
     sectionIdx: number,
     groupIdx: number,
-    e: React.ChangeEvent<HTMLInputElement>
+    e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -409,7 +469,7 @@ export function EditListeningModal({
         return alert(
           `Section ${i + 1} must have exactly 10 questions! (Current: ${
             sec.totalQuestions
-          })`
+          })`,
         );
       }
       if (!sec.audioUrl)
@@ -427,6 +487,8 @@ export function EditListeningModal({
             questionNumber: qNum++,
             questionType: group.type,
             imageUrl: group.sharedImageUrl || q.imageUrl,
+            // --- MUHIM: Guruh instruksiyasini savolga yozamiz ---
+            instruction: group.instruction || "",
           });
         });
       });
@@ -580,8 +642,8 @@ export function EditListeningModal({
                 section.totalQuestions === 10
                   ? "border-green-400 bg-green-50"
                   : section.totalQuestions > 0
-                  ? "border-yellow-400 bg-yellow-50"
-                  : "border-gray-300"
+                    ? "border-yellow-400 bg-yellow-50"
+                    : "border-gray-300"
               }`}
             >
               {/* Section Header */}
@@ -597,8 +659,8 @@ export function EditListeningModal({
                       section.totalQuestions === 10
                         ? "bg-green-600"
                         : section.totalQuestions > 0
-                        ? "bg-yellow-600"
-                        : "bg-gray-500"
+                          ? "bg-yellow-600"
+                          : "bg-gray-500"
                     }`}
                   >
                     {section.sectionNumber}
@@ -651,8 +713,8 @@ export function EditListeningModal({
                           uploadingAudio[idx]
                             ? "bg-gray-200"
                             : section.audioUrl
-                            ? "bg-green-100 text-green-700"
-                            : "bg-purple-100 text-purple-700 hover:bg-purple-200"
+                              ? "bg-green-100 text-green-700"
+                              : "bg-purple-100 text-purple-700 hover:bg-purple-200"
                         }`}
                       >
                         {uploadingAudio[idx] ? (
@@ -709,7 +771,7 @@ export function EditListeningModal({
                             className="px-5 py-3 bg-gray-100 flex justify-between items-center cursor-pointer"
                             onClick={() =>
                               setExpandedGroup(
-                                expandedGroup === group.id ? null : group.id
+                                expandedGroup === group.id ? null : group.id,
                               )
                             }
                           >
@@ -720,7 +782,7 @@ export function EditListeningModal({
                               <span className="font-semibold">
                                 {
                                   QUESTION_TYPES.find(
-                                    (t) => t.value === group.type
+                                    (t) => t.value === group.type,
                                   )?.label
                                 }
                               </span>
@@ -757,7 +819,7 @@ export function EditListeningModal({
                                       updateGroupType(
                                         idx,
                                         gIdx,
-                                        e.target.value as QuestionType
+                                        e.target.value as QuestionType,
                                       )
                                     }
                                     className="w-full px-3 py-2 border rounded-lg"
@@ -783,12 +845,57 @@ export function EditListeningModal({
                                         idx,
                                         gIdx,
                                         "count",
-                                        Number(e.target.value)
+                                        Number(e.target.value),
                                       )
                                     }
                                     className="w-full px-3 py-2 border rounded-lg"
                                   />
                                 </div>
+                              </div>
+
+                              {/* --- YANGI: INSTRUCTION EDIT --- */}
+                              <div>
+                                <label className="text-xs font-bold text-gray-600 mb-1 flex items-center gap-1">
+                                  <Info size={12} className="text-purple-500" />
+                                  Instruction (header)
+                                </label>
+                                <div className="relative">
+                                  <select
+                                    value={group.instruction || ""}
+                                    onChange={(e) =>
+                                      updateGroupInstruction(
+                                        idx,
+                                        gIdx,
+                                        e.target.value,
+                                      )
+                                    }
+                                    className="w-full px-3 py-2 border-2 border-purple-200 bg-purple-50/50 rounded-lg text-sm font-medium focus:ring-2 focus:ring-purple-500 appearance-none"
+                                  >
+                                    <option value="">
+                                      -- No Instruction --
+                                    </option>
+                                    {COMMON_INSTRUCTIONS.map((inst, i) => (
+                                      <option key={i} value={inst}>
+                                        {inst}
+                                      </option>
+                                    ))}
+                                  </select>
+                                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
+                                </div>
+                                {/* Custom Instruction */}
+                                <input
+                                  type="text"
+                                  placeholder="Or type custom instruction..."
+                                  className="w-full mt-2 px-3 py-2 border-b-2 border-gray-200 text-xs focus:outline-none focus:border-purple-400"
+                                  value={group.instruction || ""}
+                                  onChange={(e) =>
+                                    updateGroupInstruction(
+                                      idx,
+                                      gIdx,
+                                      e.target.value,
+                                    )
+                                  }
+                                />
                               </div>
 
                               {/* Image Upload for Plan/Map/Diagram */}
@@ -812,8 +919,8 @@ export function EditListeningModal({
                                       uploadingImage[`${idx}-${gIdx}`]
                                         ? "bg-gray-200"
                                         : group.sharedImageUrl
-                                        ? "bg-blue-100 text-blue-700"
-                                        : "bg-blue-50 hover:bg-blue-100 text-blue-700"
+                                          ? "bg-blue-100 text-blue-700"
+                                          : "bg-blue-50 hover:bg-blue-100 text-blue-700"
                                     }`}
                                   >
                                     {uploadingImage[`${idx}-${gIdx}`] ? (
@@ -848,6 +955,23 @@ export function EditListeningModal({
                                       Question #{qIdx + 1}
                                     </div>
 
+                                    {/* Context Text (Edit uchun) */}
+                                    <textarea
+                                      value={q.contextText || ""}
+                                      onChange={(e) =>
+                                        updateQuestionField(
+                                          idx,
+                                          gIdx,
+                                          qIdx,
+                                          "contextText",
+                                          e.target.value,
+                                        )
+                                      }
+                                      rows={2}
+                                      className="w-full px-4 py-2 border rounded-lg text-xs"
+                                      placeholder="Context text (optional)..."
+                                    />
+
                                     <input
                                       value={q.question}
                                       onChange={(e) =>
@@ -856,7 +980,7 @@ export function EditListeningModal({
                                           gIdx,
                                           qIdx,
                                           "question",
-                                          e.target.value
+                                          e.target.value,
                                         )
                                       }
                                       placeholder="Question text..."
@@ -878,11 +1002,11 @@ export function EditListeningModal({
                                                   gIdx,
                                                   qIdx,
                                                   optIdx,
-                                                  e.target.value
+                                                  e.target.value,
                                                 )
                                               }
                                               placeholder={`Option ${String.fromCharCode(
-                                                65 + optIdx
+                                                65 + optIdx,
                                               )}`}
                                               className="px-3 py-2 border rounded-lg"
                                             />
@@ -898,7 +1022,7 @@ export function EditListeningModal({
                                           gIdx,
                                           qIdx,
                                           "correctAnswer",
-                                          e.target.value
+                                          e.target.value,
                                         )
                                       }
                                       placeholder="Correct answer..."
