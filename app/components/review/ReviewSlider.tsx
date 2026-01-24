@@ -90,13 +90,13 @@ export default function ReviewsSlider() {
           {/* Navigation Buttons (Desktop) */}
           <button
             onClick={prevSlide}
-            className="absolute -left-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white rounded-full shadow-lg border border-gray-100 flex items-center justify-center text-gray-600 hover:text-[#9C74FF] hover:scale-110 transition-all hidden lg:flex"
+            className="absolute -left-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white rounded-full shadow-lg border border-gray-100 flex items-center justify-center text-gray-600 hover:text-[#9C74FF] hover:scale-110 transition-all  lg:flex"
           >
             <ChevronLeft size={24} />
           </button>
           <button
             onClick={nextSlide}
-            className="absolute -right-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white rounded-full shadow-lg border border-gray-100 flex items-center justify-center text-gray-600 hover:text-[#9C74FF] hover:scale-110 transition-all hidden lg:flex"
+            className="absolute -right-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white rounded-full shadow-lg border border-gray-100 flex items-center justify-center text-gray-600 hover:text-[#9C74FF] hover:scale-110 transition-all  lg:flex"
           >
             <ChevronRight size={24} />
           </button>
