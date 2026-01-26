@@ -3,12 +3,11 @@ import {
   Award,
   ArrowRight,
   Star,
-  Calendar,
   BookOpen,
   Target,
   Clock,
   Trophy,
-  Users,
+  FileText,
 } from "lucide-react";
 import UseDemoButton from "./components/useDemoBtn";
 import ReviewsSlider from "./components/review/ReviewSlider";
@@ -144,14 +143,14 @@ export default function HomePage() {
                 <div className="absolute -bottom-6 -left-6 bg-white text-[#2A2A2A] px-6 py-4 rounded-xl shadow-2xl transform group-hover:scale-110 group-hover:-rotate-2 transition-all duration-300 glow-pulse">
                   <div className="flex items-center gap-3">
                     <div className="bg-[#9C74FF]/20 p-3 rounded-lg group-hover:rotate-12 transition-transform duration-300">
-                      <Users className="w-6 h-6 text-[#9C74FF]" />
+                      <FileText className="w-6 h-6 text-[#9C74FF]" />
                     </div>
                     <div>
                       <div className="text-2xl font-black text-[#9C74FF]">
-                        2,500+
+                        20+
                       </div>
                       <div className="text-sm text-gray-600 font-semibold">
-                        Active Learners
+                        Real Tests
                       </div>
                     </div>
                   </div>
