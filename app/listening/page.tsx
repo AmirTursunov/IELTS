@@ -181,13 +181,10 @@ export default function ListeningTestsPage() {
                 <div className="flex gap-2 mt-3">
                   <span
                     className={`px-3 py-1 rounded-full text-xs font-bold border ${difficultyColor(
-                      test.difficulty
+                      test.difficulty,
                     )}`}
                   >
                     {test.difficulty}
-                  </span>
-                  <span className="px-3 py-1 bg-white/20 rounded-full text-xs">
-                    {test.testType}
                   </span>
                 </div>
               </div>

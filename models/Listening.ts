@@ -37,7 +37,7 @@ export interface IListeningSection {
 export interface IListening extends Document {
   testName: string;
   difficulty: "easy" | "medium" | "hard";
-  duration?: number; // in minutes
+  timeLimit?: number; // in minutes
   sections: IListeningSection[];
   totalQuestions: number;
   createdAt: Date;
@@ -92,7 +92,7 @@ const ListeningSchema = new Schema<IListening>(
       enum: ["easy", "medium", "hard"],
       required: true,
     },
-    duration: { type: Number, default: 30 },
+    timeLimit: { type: Number, default: 30 },
     sections: [ListeningSectionSchema],
     totalQuestions: { type: Number, required: true },
   },

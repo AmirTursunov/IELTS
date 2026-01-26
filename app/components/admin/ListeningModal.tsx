@@ -695,7 +695,6 @@ export const AddListeningTestModal: FC<{
             questionNumber: questionNumber++,
             questionType: group.type,
             contextText: q.contextText || "",
-            // --- O'ZGARISH: Instruction maydonini qo'shdik ---
             instruction: group.instruction || "",
             question: q.question,
             options: q.options,

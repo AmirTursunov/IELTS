@@ -10,20 +10,21 @@ export async function GET(req: NextRequest) {
     const searchParams = req.nextUrl.searchParams;
     const difficulty = searchParams.get("difficulty");
     const testType = searchParams.get("testType");
+    const duration = searchParams.get("duration");
 
     const filter: any = {};
     if (difficulty) filter.difficulty = difficulty;
     if (testType) filter.testType = testType;
-
+    if (duration) filter.duration = duration;
     const tests = await Reading.find(filter).select(
-      "-passages.questions.correctAnswer"
+      "-passages.questions.correctAnswer",
     );
 
     return NextResponse.json({ success: true, data: tests });
   } catch (error: any) {
     return NextResponse.json(
       { success: false, error: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -40,7 +41,7 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     return NextResponse.json(
       { success: false, error: error.message },
-      { status: 400 }
+      { status: 400 },
     );
   }
 }

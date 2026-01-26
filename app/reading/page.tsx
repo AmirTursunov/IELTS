@@ -20,7 +20,7 @@ interface Test {
   _id: string;
   title: string;
   difficulty: "Easy" | "Medium" | "Hard";
-  timeLimit: number;
+  duration: number;
   testType: "Academic" | "General";
   totalQuestions: number;
   passages?: any[];
@@ -289,7 +289,7 @@ export default function ReadingTestsPage() {
                       Time Limit
                     </span>
                     <span className="font-bold text-[#9C74FF]">
-                      {test.timeLimit} min
+                      {test.duration} min
                     </span>
                   </div>
 
