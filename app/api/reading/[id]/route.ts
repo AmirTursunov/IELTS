@@ -4,7 +4,7 @@ import { Reading } from "@/models/Reading";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     await connectDB();
@@ -14,7 +14,7 @@ export async function GET(
     if (!id || id === "undefined") {
       return NextResponse.json(
         { success: false, error: "Invalid test ID" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -24,7 +24,7 @@ export async function GET(
     if (!test) {
       return NextResponse.json(
         { success: false, error: "Test not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -38,8 +38,10 @@ export async function GET(
           questionNumber: q.questionNumber,
           questionType: q.questionType,
           question: q.question,
+          instruction: q.instruction || "",
           options: q.options || [],
           correctAnswer: q.correctAnswer || "",
+          contextText: q.contextText || "",
           points: q.points || 1,
         })),
       })),
@@ -50,14 +52,14 @@ export async function GET(
     console.error("GET reading test error:", error);
     return NextResponse.json(
       { success: false, error: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     await connectDB();
@@ -68,7 +70,7 @@ export async function PUT(
     if (!id || id === "undefined") {
       return NextResponse.json(
         { success: false, error: "Invalid test ID" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -94,7 +96,7 @@ export async function PUT(
     if (!test) {
       return NextResponse.json(
         { success: false, error: "Test not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -103,14 +105,14 @@ export async function PUT(
     console.error("PUT reading test error:", error);
     return NextResponse.json(
       { success: false, error: error.message },
-      { status: 400 }
+      { status: 400 },
     );
   }
 }
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     await connectDB();
@@ -120,7 +122,7 @@ export async function DELETE(
     if (!id || id === "undefined") {
       return NextResponse.json(
         { success: false, error: "Invalid test ID" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -129,7 +131,7 @@ export async function DELETE(
     if (!test) {
       return NextResponse.json(
         { success: false, error: "Test not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -138,7 +140,7 @@ export async function DELETE(
     console.error("DELETE reading test error:", error);
     return NextResponse.json(
       { success: false, error: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

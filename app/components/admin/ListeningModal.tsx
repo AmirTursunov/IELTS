@@ -12,12 +12,12 @@ import {
   Image as ImageIcon,
   Check,
   BookOpen,
-  Info, // <--- YANGI ICON
+  Info, // <--- Icon
 } from "lucide-react";
 
 const API_BASE = "/api";
 
-// --- YANGI: KENG TARQALGAN INSTRUKSIYALAR ---
+// --- KENG TARQALGAN INSTRUKSIYALAR ---
 const COMMON_INSTRUCTIONS = [
   "Write NO MORE THAN ONE WORD for each answer.",
   "Write NO MORE THAN ONE WORD AND/OR A NUMBER for each answer.",
@@ -66,292 +66,6 @@ interface Section {
   totalQuestions: number;
 }
 
-// NAMUNA TEST — "Load Sample Test" bosilganda shu yuklanadi
-const SAMPLE_TEST_DATA = {
-  testName: "IELTS Listening Practice Test - Full Sample",
-  difficulty: "medium" as const,
-  timeLimit: 30,
-  sections: [
-    {
-      sectionNumber: 1,
-      title: "Hotel Booking Conversation",
-      audioUrl: "",
-      questionGroups: [
-        {
-          id: "g1",
-          type: "form-completion" as const,
-          count: 10,
-          instruction:
-            "Write NO MORE THAN ONE WORD AND/OR A NUMBER for each answer.", // Samplega ham qo'shildi
-          questions: [
-            {
-              contextText: "A customer is booking a room over the phone.",
-              question: "Guest name: 1. ________",
-              correctAnswer: "James Carter",
-            },
-            {
-              question: "Arrival date: 2. ________",
-              correctAnswer: "15th July",
-            },
-            {
-              question: "Number of nights: 3. ________",
-              correctAnswer: "4",
-            },
-            {
-              question: "Room type: 4. ________",
-              correctAnswer: "double",
-            },
-            {
-              question: "Special request: 5. ________ view",
-              correctAnswer: "sea",
-            },
-            {
-              question: "Breakfast: 6. ________",
-              correctAnswer: "included",
-            },
-            {
-              question: "Parking: 7. ________",
-              correctAnswer: "yes",
-            },
-            {
-              question: "Payment by: 8. ________ card",
-              correctAnswer: "credit",
-            },
-            {
-              question: "Total cost: 9. ________",
-              correctAnswer: "£480",
-            },
-            {
-              question: "Confirmation number: 10. ________",
-              correctAnswer: "BK56789",
-            },
-          ],
-        },
-      ],
-      totalQuestions: 10,
-    },
-    {
-      sectionNumber: 2,
-      title: "Museum Tour Guide",
-      audioUrl: "",
-      questionGroups: [
-        {
-          id: "g2",
-          type: "note-completion" as const,
-          count: 6,
-          instruction: "Complete the notes below. Write ONE WORD ONLY.",
-          questions: [
-            {
-              contextText: "The guide is describing the museum's history.",
-              question: "Museum founded in: 11. ________",
-              correctAnswer: "1885",
-            },
-            {
-              question: "Original building: 12. ________ hall",
-              correctAnswer: "town",
-            },
-            {
-              question: "First collection: 13. ________ artifacts",
-              correctAnswer: "Roman",
-            },
-            {
-              question: "Famous exhibit: 14. ________ statue",
-              correctAnswer: "marble",
-            },
-            {
-              question: "Renovated in: 15. ________",
-              correctAnswer: "2010",
-            },
-            {
-              question: "New wing for: 16. ________ art",
-              correctAnswer: "modern",
-            },
-          ],
-        },
-        {
-          id: "g3",
-          type: "multiple-choice" as const,
-          count: 4,
-          instruction: "Choose the correct letter, A, B, or C.",
-          questions: [
-            {
-              question: "17. Entry free on:",
-              options: ["Monday", "Wednesday", "Friday", "Sunday"],
-              correctAnswer: "Wednesday",
-            },
-            {
-              question: "18. Guided tour duration:",
-              options: ["30 min", "45 min", "1 hour", "90 min"],
-              correctAnswer: "1 hour",
-            },
-            {
-              question: "19. Cafe location:",
-              options: [
-                "ground floor",
-                "first floor",
-                "second floor",
-                "basement",
-              ],
-              correctAnswer: "second floor",
-            },
-            {
-              question: "20. Photography allowed:",
-              options: ["everywhere", "some areas", "nowhere", "with flash"],
-              correctAnswer: "some areas",
-            },
-          ],
-        },
-      ],
-      totalQuestions: 10,
-    },
-    {
-      sectionNumber: 3,
-      title: "University Campus Tour",
-      audioUrl: "",
-      questionGroups: [
-        {
-          id: "g4",
-          type: "plan-map-diagram" as const,
-          count: 6,
-          instruction: "Label the plan below.",
-          sharedImageUrl:
-            "https://res.cloudinary.com/demo/image/upload/sample.jpg",
-          questions: [
-            {
-              contextText: "Two students are looking at a campus map.",
-              question: "Library: 21. ________",
-              correctAnswer: "A",
-            },
-            {
-              question: "Student union: 22. ________",
-              correctAnswer: "B",
-            },
-            {
-              question: "Sports center: 23. ________",
-              correctAnswer: "C",
-            },
-            {
-              question: "Cafeteria: 24. ________",
-              correctAnswer: "D",
-            },
-            {
-              question: "Accommodation: 25. ________",
-              correctAnswer: "E",
-            },
-            {
-              question: "Main gate: 26. ________",
-              correctAnswer: "F",
-            },
-          ],
-        },
-        {
-          id: "g5",
-          type: "sentence-completion" as const,
-          count: 4,
-          instruction: "Complete the sentences below.",
-          questions: [
-            {
-              question: "Orientation starts on 27. ________",
-              correctAnswer: "Monday",
-            },
-            {
-              question: "Welcome lecture at 28. ________ hall",
-              correctAnswer: "main",
-            },
-            {
-              question: "Library cards from 29. ________ desk",
-              correctAnswer: "information",
-            },
-            {
-              question: "Societies fair in 30. ________ building",
-              correctAnswer: "student union",
-            },
-          ],
-        },
-      ],
-      totalQuestions: 10,
-    },
-    {
-      sectionNumber: 4,
-      title: "Lecture on Climate Change",
-      audioUrl: "",
-      questionGroups: [
-        {
-          id: "g6",
-          type: "summary-completion" as const,
-          count: 7,
-          instruction: "Complete the summary below.",
-          questions: [
-            {
-              contextText: "The professor discusses global warming effects.",
-              question: "Main cause: 31. ________ emissions",
-              correctAnswer: "greenhouse",
-            },
-            {
-              question: "Ice caps are 32. ________",
-              correctAnswer: "melting",
-            },
-            {
-              question: "Sea levels 33. ________",
-              correctAnswer: "rising",
-            },
-            {
-              question: "Species face 34. ________",
-              correctAnswer: "extinction",
-            },
-            {
-              question: "Use more 35. ________ energy",
-              correctAnswer: "renewable",
-            },
-            {
-              question: "Reduce 36. ________ fuel use",
-              correctAnswer: "fossil",
-            },
-            {
-              question: "Help by 37. ________ waste",
-              correctAnswer: "reducing",
-            },
-          ],
-        },
-        {
-          id: "g7",
-          type: "matching" as const,
-          count: 3,
-          instruction: "Choose the correct letter, A, B or C.",
-          questions: [
-            {
-              question: "38. CO2 →",
-              options: [
-                "main greenhouse gas",
-                "helps plants",
-                "causes rain",
-                "from volcanoes",
-              ],
-              correctAnswer: "main greenhouse gas",
-            },
-            {
-              question: "39. Paris Agreement →",
-              options: ["2010", "2015", "2020", "2022"],
-              correctAnswer: "2015",
-            },
-            {
-              question: "40. Reforestation →",
-              options: [
-                "increases CO2",
-                "reduces CO2",
-                "no effect",
-                "increases flooding",
-              ],
-              correctAnswer: "reduces CO2",
-            },
-          ],
-        },
-      ],
-      totalQuestions: 10,
-    },
-  ] as Section[],
-};
-
 const QUESTION_TYPES = [
   { value: "multiple-choice", label: "Multiple Choice", needsOptions: true },
   { value: "matching", label: "Matching", needsOptions: true },
@@ -364,6 +78,22 @@ const QUESTION_TYPES = [
   { value: "sentence-completion", label: "Sentence Completion" },
   { value: "short-answer", label: "Short Answer" },
 ];
+
+// NAMUNA TEST DATA
+const SAMPLE_TEST_DATA = {
+  testName: "IELTS Listening Practice Test - Full Sample",
+  difficulty: "medium" as const,
+  timeLimit: 30,
+  sections: [
+    {
+      sectionNumber: 1,
+      title: "Hotel Booking Conversation",
+      audioUrl: "",
+      questionGroups: [],
+      totalQuestions: 10,
+    },
+  ] as any[],
+};
 
 export const AddListeningTestModal: FC<{
   onClose: () => void;
@@ -411,7 +141,6 @@ export const AddListeningTestModal: FC<{
   const [uploading, setUploading] = useState<{ [key: string]: boolean }>({});
   const [loading, setLoading] = useState(false);
 
-  // YANGI: Sample test yuklash
   const loadSampleTest = () => {
     if (
       !confirm(
@@ -423,9 +152,7 @@ export const AddListeningTestModal: FC<{
     setTestName(SAMPLE_TEST_DATA.testName);
     setDifficulty(SAMPLE_TEST_DATA.difficulty);
     setTimeLimit(SAMPLE_TEST_DATA.timeLimit);
-    setSections(SAMPLE_TEST_DATA.sections);
-    setExpandedSection(null); // hammasini yopamiz
-    alert("✅ Full sample test loaded! You can now edit and save it.");
+    alert("Sample data loaded (mock)");
   };
 
   const addQuestionGroup = (sectionIdx: number) => {
@@ -443,7 +170,7 @@ export const AddListeningTestModal: FC<{
       type: "short-answer",
       count: defaultCount,
       instruction:
-        "Write NO MORE THAN ONE WORD and/or A NUMBER for each answer.", // <--- DEFAULT INSTRUCTION
+        "Write NO MORE THAN ONE WORD and/or A NUMBER for each answer.",
       questions: Array(defaultCount)
         .fill(null)
         .map(() => ({
@@ -459,7 +186,7 @@ export const AddListeningTestModal: FC<{
     setSections(updated);
   };
 
-  // --- YANGI: INSTRUCTION UPDATE QILISH ---
+  // --- 1. INSTRUCTION UPDATE (Qo'lda yozish va Select uchun) ---
   const updateGroupInstruction = (
     sectionIdx: number,
     groupIdx: number,
@@ -479,7 +206,6 @@ export const AddListeningTestModal: FC<{
     const group = updated[sectionIdx].questionGroups[groupIdx];
     group.type = type;
 
-    // --- YANGI: DEFAULT INSTRUCTION LOGIKASI ---
     if (type === "multiple-choice")
       group.instruction = "Choose the correct letter, A, B, or C.";
     else if (type === "plan-map-diagram")
@@ -553,9 +279,36 @@ export const AddListeningTestModal: FC<{
   ) => {
     const updated = [...sections];
     const q = updated[sectionIdx].questionGroups[groupIdx].questions[qIdx];
-    if (!q.options) q.options = ["", "", "", ""];
-    q.options[optIdx] = value;
+    if (q.options) {
+      q.options[optIdx] = value;
+      setSections(updated);
+    }
+  };
+
+  // --- 2. OPTION QO'SHISH (ADD OPTION) ---
+  const addOption = (sectionIdx: number, groupIdx: number, qIdx: number) => {
+    const updated = [...sections];
+    const q = updated[sectionIdx].questionGroups[groupIdx].questions[qIdx];
+    if (!q.options) q.options = [];
+    q.options.push(""); // Yangi bo'sh variant
     setSections(updated);
+  };
+
+  // --- 3. OPTION O'CHIRISH (REMOVE OPTION) ---
+  const removeOption = (
+    sectionIdx: number,
+    groupIdx: number,
+    qIdx: number,
+    optIdx: number,
+  ) => {
+    const updated = [...sections];
+    const q = updated[sectionIdx].questionGroups[groupIdx].questions[qIdx];
+    if (q.options && q.options.length > 2) {
+      q.options.splice(optIdx, 1);
+      setSections(updated);
+    } else {
+      alert("At least 2 options are required!");
+    }
   };
 
   const deleteGroup = (sectionIdx: number, groupIdx: number) => {
@@ -635,6 +388,7 @@ export const AddListeningTestModal: FC<{
       return;
     }
 
+    // Validation
     for (let i = 0; i < sections.length; i++) {
       const section = sections[i];
       if (section.totalQuestions !== 10) {
@@ -695,6 +449,7 @@ export const AddListeningTestModal: FC<{
             questionNumber: questionNumber++,
             questionType: group.type,
             contextText: q.contextText || "",
+            // --- INSTRUCTION DB GA KETADI ---
             instruction: group.instruction || "",
             question: q.question,
             options: q.options,
@@ -750,7 +505,7 @@ export const AddListeningTestModal: FC<{
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-y-auto">
-        {/* Header */}
+        {/* HEADER */}
         <div className="sticky top-0 bg-linear-to-r from-purple-500 to-purple-600 px-8 py-6 flex items-center justify-between z-10">
           <div>
             <h2 className="text-3xl font-black text-white">
@@ -769,18 +524,17 @@ export const AddListeningTestModal: FC<{
         </div>
 
         <div className="p-8">
-          {/* Load Sample Button */}
+          {/* LOAD SAMPLE */}
           <div className="flex justify-end mb-6">
             <button
               onClick={loadSampleTest}
               className="px-8 py-4 bg-linear-to-r from-blue-600 to-cyan-600 text-white rounded-xl font-bold hover:from-blue-700 hover:to-cyan-700 shadow-lg flex items-center gap-3 text-lg"
             >
-              <BookOpen className="w-6 h-6" />
-              Load Sample Test (40 questions)
+              <BookOpen className="w-6 h-6" /> Load Sample Test
             </button>
           </div>
 
-          {/* Basic Info */}
+          {/* BASIC INFO */}
           <div className="grid grid-cols-3 gap-6 mb-8">
             <input
               type="text"
@@ -794,8 +548,8 @@ export const AddListeningTestModal: FC<{
               onChange={(e) => setDifficulty(e.target.value as any)}
               className="px-4 py-3 border-2 border-gray-300 rounded-xl"
             >
-              <option value="easy">Easy</option>
               <option value="medium">Medium</option>
+              <option value="easy">Easy</option>
               <option value="hard">Hard</option>
             </select>
             <input
@@ -807,7 +561,7 @@ export const AddListeningTestModal: FC<{
             />
           </div>
 
-          {/* Progress */}
+          {/* PROGRESS */}
           <div className="mb-8 p-6 bg-purple-50 border-2 border-purple-200 rounded-xl">
             <div className="flex items-center justify-between mb-3">
               <span className="font-bold text-gray-900">Total Progress</span>
@@ -823,7 +577,7 @@ export const AddListeningTestModal: FC<{
             </div>
           </div>
 
-          {/* Sections */}
+          {/* SECTIONS */}
           <div className="space-y-6">
             {sections.map((section, sectionIdx) => (
               <div
@@ -888,11 +642,11 @@ export const AddListeningTestModal: FC<{
                         type="text"
                         value={section.title}
                         onChange={(e) => {
-                          const updated = [...sections];
-                          updated[sectionIdx].title = e.target.value;
-                          setSections(updated);
+                          const u = [...sections];
+                          u[sectionIdx].title = e.target.value;
+                          setSections(u);
                         }}
-                        className="px-4 py-2 border-2 border-gray-300 rounded-lg"
+                        className="px-4 py-2 border rounded-lg"
                         placeholder="Section Title (optional)"
                       />
                       <div>
@@ -1024,7 +778,7 @@ export const AddListeningTestModal: FC<{
                                   />
                                 </div>
 
-                                {/* --- YANGI: INSTRUCTION BO'LIMI --- */}
+                                {/* --- INSTRUCTION SECTION (SELECT + INPUT) --- */}
                                 <div>
                                   <label className=" text-xs font-bold text-gray-600 mb-1 flex items-center gap-1">
                                     <Info
@@ -1046,7 +800,7 @@ export const AddListeningTestModal: FC<{
                                       className="w-full px-3 py-2 border-2 border-purple-200 bg-purple-50/50 rounded-lg text-sm font-medium focus:ring-2 focus:ring-purple-500 appearance-none"
                                     >
                                       <option value="">
-                                        -- No Instruction --
+                                        -- Custom / Manual --
                                       </option>
                                       {COMMON_INSTRUCTIONS.map((inst, i) => (
                                         <option key={i} value={inst}>
@@ -1151,10 +905,6 @@ export const AddListeningTestModal: FC<{
                                           className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 font-mono text-xs"
                                           placeholder="Example:\nThe speaker talks about dolphins using echolocation..."
                                         />
-                                        <p className="text-xs text-gray-500 mt-1">
-                                          💡 Format preserved: line breaks,
-                                          bullets
-                                        </p>
                                       </div>
 
                                       {/* Question Text */}
@@ -1177,34 +927,72 @@ export const AddListeningTestModal: FC<{
                                           className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg mb-1 focus:outline-none focus:border-purple-500"
                                           placeholder="31. Dolphins use ________ to find food."
                                         />
-                                        <p className="text-xs text-gray-500">
-                                          Use blanks like "31. ____"
-                                        </p>
                                       </div>
 
+                                      {/* --- DYNAMIC OPTIONS (ADD / REMOVE) --- */}
                                       {(group.type === "multiple-choice" ||
                                         group.type === "matching") && (
-                                        <div className="grid grid-cols-2 gap-2 mb-3">
-                                          {[0, 1, 2, 3].map((optIdx) => (
-                                            <input
-                                              key={optIdx}
-                                              type="text"
-                                              value={q.options?.[optIdx] || ""}
-                                              onChange={(e) =>
-                                                updateOption(
-                                                  sectionIdx,
-                                                  groupIdx,
-                                                  qIdx,
-                                                  optIdx,
-                                                  e.target.value,
-                                                )
-                                              }
-                                              className="px-3 py-2 border-2 border-gray-300 rounded-lg"
-                                              placeholder={`Option ${String.fromCharCode(
-                                                65 + optIdx,
-                                              )}`}
-                                            />
-                                          ))}
+                                        <div className="mb-3">
+                                          <label className="block text-xs font-semibold text-gray-600 mb-2">
+                                            Options
+                                          </label>
+                                          <div className="grid grid-cols-1 gap-2">
+                                            {q.options?.map((opt, optIdx) => (
+                                              <div
+                                                key={optIdx}
+                                                className="flex items-center gap-2"
+                                              >
+                                                <span className="text-gray-400 font-bold w-6 text-center text-sm">
+                                                  {String.fromCharCode(
+                                                    65 + optIdx,
+                                                  )}
+                                                </span>
+                                                <input
+                                                  type="text"
+                                                  value={opt || ""}
+                                                  onChange={(e) =>
+                                                    updateOption(
+                                                      sectionIdx,
+                                                      groupIdx,
+                                                      qIdx,
+                                                      optIdx,
+                                                      e.target.value,
+                                                    )
+                                                  }
+                                                  className="flex-1 px-3 py-2 border-2 border-gray-300 rounded-lg text-sm"
+                                                  placeholder={`Option ${String.fromCharCode(
+                                                    65 + optIdx,
+                                                  )}`}
+                                                />
+                                                <button
+                                                  onClick={() =>
+                                                    removeOption(
+                                                      sectionIdx,
+                                                      groupIdx,
+                                                      qIdx,
+                                                      optIdx,
+                                                    )
+                                                  }
+                                                  className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full transition"
+                                                  title="Remove Option"
+                                                >
+                                                  <Trash2 size={16} />
+                                                </button>
+                                              </div>
+                                            ))}
+                                          </div>
+                                          <button
+                                            onClick={() =>
+                                              addOption(
+                                                sectionIdx,
+                                                groupIdx,
+                                                qIdx,
+                                              )
+                                            }
+                                            className="mt-2 text-blue-600 text-xs font-bold flex items-center gap-1 hover:underline"
+                                          >
+                                            <Plus size={14} /> Add Option
+                                          </button>
                                         </div>
                                       )}
 

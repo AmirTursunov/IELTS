@@ -38,6 +38,7 @@ export interface IListening extends Document {
   testName: string;
   difficulty: "easy" | "medium" | "hard";
   timeLimit?: number; // in minutes
+  status: "paid" | "free";
   sections: IListeningSection[];
   totalQuestions: number;
   createdAt: Date;
@@ -93,6 +94,7 @@ const ListeningSchema = new Schema<IListening>(
       required: true,
     },
     timeLimit: { type: Number, default: 30 },
+    status: { type: String, enum: ["paid", "free"], default: "paid" },
     sections: [ListeningSectionSchema],
     totalQuestions: { type: Number, required: true },
   },

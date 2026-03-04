@@ -1,117 +1,67 @@
 "use client";
 import React, { FC, useEffect, useState } from "react";
-import { Search } from "lucide-react";
+import { Search, Loader2, User as UserIcon, RefreshCw } from "lucide-react";
 
-interface AppUser {
-  id: number;
+// API dan keladigan ma'lumot formati
+interface UserData {
+  _id: string;
   name: string;
   email: string;
   tests: number;
-  score: number;
+  score: string | number;
+  createdAt: string;
 }
-type TestType = "reading" | "listening" | "speaking" | "writing";
-interface PerformanceByType {
-  reading: number;
-  listening: number;
-  speaking: number;
-  writing: number;
-}
-interface StatsResponse {
-  success: boolean;
-  data?: {
-    stats: {
-      totalTests: number;
-      averageBand: number;
-      studyStreak: number;
-      hoursStudied: number;
-    };
-    recentTests: {
-      id: string;
-      type: TestType;
-      score: number;
-      bandScore: number;
-      date: string | Date;
-    }[];
-    performanceByType: PerformanceByType;
-    user: {
-      name: string;
-      email: string;
-      avatar?: string;
-      role: string;
-      joinedAt: Date;
-    };
-  };
-  error?: string;
-}
+
 export const UsersContent: FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>("");
-  const [users, setUsers] = useState<StatsResponse[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-  const [test, setTest] = useState<any>(null);
-  const [timeRemaining, setTimeRemaining] = useState<number>(0);
+  const [users, setUsers] = useState<UserData[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  // Komponent yuklanganda ishga tushadi
   useEffect(() => {
-    loadUser();
+    fetchUsers();
   }, []);
-  const loadUser = async () => {
+
+  const fetchUsers = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      setError(null);
-      const response = await fetch(`/api/user/stats`);
-      const result = await response.json();
-      if (result.success) {
-        setUsers(result.data);
-        setTimeRemaining(
-          result.data.timeLimit ? result.data.timeLimit * 60 : 1800
-        );
-        console.log("Loaded user:", result.data);
-      } else {
-        setError(result.error || "Failed to load user");
+      const res = await fetch("/api/users");
+      const data = await res.json();
+      if (data.success) {
+        setUsers(data.data);
       }
-    } catch (error: any) {
-      console.error("Error loading user:", error);
-      setError("Network error occurred");
+    } catch (error) {
+      console.error("Error loading users:", error);
     } finally {
       setLoading(false);
     }
   };
-  const mockUsers: AppUser[] = [
-    {
-      id: 1,
-      name: "John Doe",
-      email: "john@example.com",
-      tests: 5,
-      score: 7.5,
-    },
-    {
-      id: 2,
-      name: "Jane Smith",
-      email: "jane@example.com",
-      tests: 3,
-      score: 8.0,
-    },
-    {
-      id: 3,
-      name: "Ali Karimov",
-      email: "ali@example.com",
-      tests: 8,
-      score: 6.5,
-    },
-  ];
 
-  const filtered = mockUsers.filter((u) =>
-    u.name.toLowerCase().includes(searchTerm.toLowerCase())
+  // Qidiruv funksiyasi (Ism yoki Email bo'yicha)
+  const filtered = users.filter(
+    (u) =>
+      (u.name?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
+      (u.email?.toLowerCase() || "").includes(searchTerm.toLowerCase()),
   );
 
   return (
     <div className="p-8">
-      <div className="mb-8">
-        <h2 className="text-3xl font-bold text-gray-800 mb-2">Users</h2>
-        <p className="text-gray-600">Manage registered users</p>
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h2 className="text-3xl font-bold text-gray-800 mb-2">Users</h2>
+          <p className="text-gray-600">Manage registered users</p>
+        </div>
+        <button
+          onClick={fetchUsers}
+          className="p-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-gray-600 transition shadow-sm"
+          title="Refresh List"
+        >
+          <RefreshCw size={20} className={loading ? "animate-spin" : ""} />
+        </button>
       </div>
 
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mb-6">
-        <div className="p-4 border-b">
+        <div className="p-4 border-b bg-gray-50/50">
           <div className="max-w-md">
             <div className="relative">
               <Search
@@ -122,59 +72,98 @@ export const UsersContent: FC = () => {
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search users..."
-                className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-300 rounded-lg text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Search users by name or email..."
+                className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-300 rounded-lg text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-sm"
               />
             </div>
           </div>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                  Name
-                </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                  Email
-                </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                  Tests Taken
-                </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                  Avg Score
-                </th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {filtered.map((user) => (
-                <tr
-                  key={user.id}
-                  className="hover:bg-gray-50 transition-colors"
-                >
-                  <td className="px-6 py-4 text-gray-800 font-medium">
-                    {user.name}
-                  </td>
-                  <td className="px-6 py-4 text-gray-600">{user.email}</td>
-                  <td className="px-6 py-4 text-gray-700">{user.tests}</td>
-                  <td className="px-6 py-4">
-                    <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">
-                      {user.score}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <button className="text-blue-600 hover:text-blue-700 font-medium transition-colors">
-                      View Details
-                    </button>
-                  </td>
+          {loading ? (
+            <div className="flex justify-center items-center py-20">
+              <Loader2 className="animate-spin text-blue-600 w-8 h-8" />
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="text-center py-16 text-gray-500">
+              <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <UserIcon size={32} className="text-gray-400" />
+              </div>
+              <p className="text-lg font-medium">No users found</p>
+            </div>
+          ) : (
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b border-gray-200">
+                <tr>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                    User Info
+                  </th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                    Date Joined
+                  </th>
+                  <th className="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
+                    Tests Taken
+                  </th>
+                  <th className="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
+                    Avg Score
+                  </th>
+                  <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-200 bg-white">
+                {filtered.map((user) => (
+                  <tr
+                    key={user._id}
+                    className="hover:bg-blue-50/50 transition-colors group"
+                  >
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 bg-linear-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white shadow-md font-bold text-lg">
+                          {user.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <div className="font-semibold text-gray-900">
+                            {user.name}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {user.email}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {new Date(user.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                        {user.tests}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <span
+                        className={`inline-flex px-3 py-1 rounded-full text-sm font-bold ${
+                          Number(user.score) >= 7.0
+                            ? "bg-green-100 text-green-700 border border-green-200"
+                            : Number(user.score) >= 5.0
+                              ? "bg-yellow-100 text-yellow-700 border border-yellow-200"
+                              : "bg-gray-100 text-gray-600 border border-gray-200"
+                        }`}
+                      >
+                        {user.score}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button className="text-blue-600 hover:text-blue-800 font-medium text-sm transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100">
+                        View Details
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
     </div>

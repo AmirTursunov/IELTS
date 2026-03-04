@@ -14,9 +14,159 @@ import {
   Play,
   RotateCcw,
   Info,
+  Bookmark,
+  NotebookPenIcon,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import ReviewModal from "@/app/components/TestReview";
+// TextFormatter Component
+interface TextFormatterProps {
+  text: string;
+  className?: string;
+}
+interface Match {
+  type: "bold" | "italic" | "underline" | "bold-italic";
+  start: number;
+  end: number;
+  text: string;
+}
+const TextFormatter: React.FC<TextFormatterProps> = ({
+  text,
+  className = "",
+}) => {
+  if (!text) return null;
+
+  // INDENT FORMAT (1r, 2r, 3r...)
+  const indentRegex = /^(\d+)r\s*/;
+  const indentMatch = text.match(indentRegex);
+
+  let indentRem = 0;
+  let processedText = text;
+
+  if (indentMatch) {
+    indentRem = Number(indentMatch[1]);
+    processedText = text.replace(indentRegex, "");
+  }
+
+  const allMatches: Match[] = [];
+  let match: RegExpExecArray | null;
+
+  // BOLD-ITALIC (***...***)
+  const boldItalicRegex = /\*\*\*(.*?)\*\*\*/g;
+  while ((match = boldItalicRegex.exec(processedText)) !== null) {
+    allMatches.push({
+      type: "bold-italic",
+      start: match.index,
+      end: match.index + match[0].length,
+      text: match[1],
+    });
+  }
+
+  // BOLD (**...**)
+  const boldRegex = /\*\*(.*?)\*\*/g;
+  while ((match = boldRegex.exec(processedText)) !== null) {
+    const overlaps = allMatches.some(
+      (m) => match!.index >= m.start && match!.index < m.end,
+    );
+
+    if (!overlaps) {
+      allMatches.push({
+        type: "bold",
+        start: match.index,
+        end: match.index + match[0].length,
+        text: match[1],
+      });
+    }
+  }
+
+  // ITALIC (*...*)
+  const italicRegex = /\*(.*?)\*/g;
+  while ((match = italicRegex.exec(processedText)) !== null) {
+    const overlaps = allMatches.some(
+      (m) => match!.index >= m.start && match!.index < m.end,
+    );
+
+    if (!overlaps) {
+      allMatches.push({
+        type: "italic",
+        start: match.index,
+        end: match.index + match[0].length,
+        text: match[1],
+      });
+    }
+  }
+
+  // UNDERLINE (__...__)
+  const underlineRegex = /__(.*?)__/g;
+  while ((match = underlineRegex.exec(processedText)) !== null) {
+    const overlaps = allMatches.some(
+      (m) => match!.index >= m.start && match!.index < m.end,
+    );
+
+    if (!overlaps) {
+      allMatches.push({
+        type: "underline",
+        start: match.index,
+        end: match.index + match[0].length,
+        text: match[1],
+      });
+    }
+  }
+
+  // Sort matches
+  allMatches.sort((a, b) => a.start - b.start);
+
+  let currentIndex = 0;
+  const result: React.ReactNode[] = [];
+
+  allMatches.forEach((m, idx) => {
+    if (m.start > currentIndex) {
+      result.push(
+        <React.Fragment key={`text-${currentIndex}`}>
+          {processedText.slice(currentIndex, m.start)}
+        </React.Fragment>,
+      );
+    }
+
+    switch (m.type) {
+      case "bold":
+        result.push(<strong key={`match-${idx}`}>{m.text}</strong>);
+        break;
+
+      case "italic":
+        result.push(<em key={`match-${idx}`}>{m.text}</em>);
+        break;
+
+      case "underline":
+        result.push(<u key={`match-${idx}`}>{m.text}</u>);
+        break;
+
+      case "bold-italic":
+        result.push(
+          <strong key={`match-${idx}`}>
+            <em>{m.text}</em>
+          </strong>,
+        );
+        break;
+    }
+
+    currentIndex = m.end;
+  });
+
+  if (currentIndex < processedText.length) {
+    result.push(
+      <React.Fragment key={`text-${currentIndex}`}>
+        {processedText.slice(currentIndex)}
+      </React.Fragment>,
+    );
+  }
+
+  return (
+    <span className={className} style={{ marginLeft: `${indentRem}rem` }}>
+      {result}
+    </span>
+  );
+};
 
 const API_BASE = "/api";
 
@@ -47,9 +197,10 @@ export default function ReadingTestPage() {
   const [infoModal, setInfoModal] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const passageContainerRef = useRef<HTMLDivElement>(null);
+  const questionContainerRef = useRef<HTMLDivElement>(null);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [highlights, setHighlights] = useState<{
-    [passageNumber: number]: {
+    [key: string]: {
       start: number;
       end: number;
       color: string;
@@ -63,42 +214,69 @@ export default function ReadingTestPage() {
     end: number;
     clientX: number;
     clientY: number;
+    context: "passage" | "question";
   } | null>(null);
 
   const [noteModal, setNoteModal] = useState(false);
+  const [activeKey, setActiveKey] = useState<string | null>(null);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [noteText, setNoteText] = useState("");
   const [showNotesSidebar, setShowNotesSidebar] = useState(false);
 
-  // Text selection - faqat passage ichida
+  // Text selection - FAQAT passage uchun
   useEffect(() => {
     const onMouseUp = (e: MouseEvent) => {
-      // Faqat passage container ichida ishlaydi
       const passageContainer = passageContainerRef.current;
-      if (!passageContainer || !passageContainer.contains(e.target as Node)) {
+
+      // FAQAT passage ichida
+      if (!passageContainer?.contains(e.target as Node)) {
         return;
       }
+
+      const container = passageContainer.querySelector(".passage-content");
+      if (!container) return;
 
       const s = window.getSelection();
       if (!s || s.rangeCount === 0 || s.isCollapsed) return;
 
       const text = s.toString().trim();
-      if (!text) return;
+      if (!text || text.length < 2) return;
 
       const r = s.getRangeAt(0);
       const pre = r.cloneRange();
-      const container = document.querySelector(".passage-content");
-      if (!container) return;
       pre.selectNodeContents(container);
       pre.setEnd(r.startContainer, r.startOffset);
       const start = pre.toString().length;
       const end = start + text.length;
 
       const rect = r.getBoundingClientRect();
-      setSel({ text, start, end, clientX: rect.left, clientY: rect.top - 48 });
+      setSel({
+        text,
+        start,
+        end,
+        clientX: rect.left + rect.width / 2,
+        clientY: rect.bottom + window.scrollY + 5,
+        context: "passage",
+      });
     };
+
+    const onMouseDown = (e: MouseEvent) => {
+      // Agar menu yoki note modal'ga bosilmasa - yopish
+      const target = e.target as HTMLElement;
+      if (
+        !target.closest(".highlight-menu") &&
+        !target.closest(".note-modal")
+      ) {
+        setSel(null);
+      }
+    };
+
     document.addEventListener("mouseup", onMouseUp);
-    return () => document.removeEventListener("mouseup", onMouseUp);
+    document.addEventListener("mousedown", onMouseDown);
+    return () => {
+      document.removeEventListener("mouseup", onMouseUp);
+      document.removeEventListener("mousedown", onMouseDown);
+    };
   }, []);
 
   useEffect(() => {
@@ -129,7 +307,6 @@ export default function ReadingTestPage() {
 
   const handleMouseDown = () => {
     setIsDragging(true);
-    // Text selection ni o'chirish
     document.body.style.userSelect = "none";
     document.body.style.webkitUserSelect = "none";
   };
@@ -144,7 +321,6 @@ export default function ReadingTestPage() {
 
   const handleMouseUp = () => {
     setIsDragging(false);
-    // Text selection ni qayta yoqish
     document.body.style.userSelect = "";
     document.body.style.webkitUserSelect = "";
   };
@@ -268,11 +444,6 @@ export default function ReadingTestPage() {
   };
 
   const handleSubmit = async () => {
-    console.log("🚀 Submit button clicked!");
-    console.log("📊 Current answers:", answers);
-    console.log("🆔 Test ID:", testId);
-
-    // Prepare data for backend
     const submitData = {
       testId: testId,
       testType: "reading",
@@ -283,11 +454,7 @@ export default function ReadingTestPage() {
       timeSpent: test.timeLimit * 60 - timeRemaining,
     };
 
-    console.log("📦 Data to submit:", JSON.stringify(submitData, null, 2));
-
     try {
-      console.log("🔄 Sending request to /api/submit-test...");
-
       const response = await fetch("/api/submit-test", {
         method: "POST",
         headers: {
@@ -296,19 +463,10 @@ export default function ReadingTestPage() {
         body: JSON.stringify(submitData),
       });
 
-      console.log("📡 Response status:", response.status);
-
       const responseData = await response.json();
-      console.log("✅ Response data:", responseData);
 
       if (responseData.success) {
-        console.log("🎉 Test submitted successfully!");
-        console.log("📊 Band Score:", responseData.data.bandScore);
-
-        // Calculate local result for display
         const localResult = calculateResult();
-
-        // Merge with backend data
         setResult({
           ...localResult,
           score: responseData.data.bandScore,
@@ -317,10 +475,7 @@ export default function ReadingTestPage() {
         });
         setShowResult(true);
       } else {
-        console.error("❌ Submission failed:", responseData.error);
         alert("Failed to submit test: " + responseData.error);
-
-        // Fallback to local result
         const localResult = calculateResult();
         setResult(localResult);
         setShowResult(true);
@@ -328,8 +483,6 @@ export default function ReadingTestPage() {
     } catch (error) {
       console.error("❌ Network error:", error);
       alert("Network error occurred. Showing local results only.");
-
-      // Fallback to local result
       const localResult = calculateResult();
       setResult(localResult);
       setShowResult(true);
@@ -350,6 +503,43 @@ export default function ReadingTestPage() {
     }
   };
 
+  useEffect(() => {
+    if (questionContainerRef.current) {
+      questionContainerRef.current.scrollTop = 0;
+    }
+    if (passageContainerRef.current) {
+      passageContainerRef.current.scrollTop = 0;
+    }
+  }, [currentPart]);
+
+  // Convert number to Roman numerals for headings
+  const toRoman = (num: number): string => {
+    const romanNumerals: [number, string][] = [
+      [1000, "M"],
+      [900, "CM"],
+      [500, "D"],
+      [400, "CD"],
+      [100, "C"],
+      [90, "XC"],
+      [50, "L"],
+      [40, "XL"],
+      [10, "X"],
+      [9, "IX"],
+      [5, "V"],
+      [4, "IV"],
+      [1, "I"],
+    ];
+
+    let result = "";
+    for (const [value, numeral] of romanNumerals) {
+      while (num >= value) {
+        result += numeral;
+        num -= value;
+      }
+    }
+    return result.toLowerCase(); // i, ii, iii instead of I, II, III
+  };
+
   const groupQuestionsByType = (questions: any[]) => {
     const groups: any[] = [];
     let currentGroup: any = null;
@@ -362,10 +552,16 @@ export default function ReadingTestPage() {
           start: question.questionNumber,
           end: question.questionNumber,
           questions: [question],
+          // Collect unique options for matching types
+          allOptions: question.options || [],
         };
       } else {
         currentGroup.end = question.questionNumber;
         currentGroup.questions.push(question);
+        // For matching types, we usually have same options for all questions in group
+        if (question.options && currentGroup.allOptions.length === 0) {
+          currentGroup.allOptions = question.options;
+        }
       }
     });
 
@@ -373,8 +569,19 @@ export default function ReadingTestPage() {
     return groups;
   };
 
-  const renderInstructions = (type: string, start: number, end: number) => {
-    const instructions: { [key: string]: { title: string; text: string } } = {
+  const renderInstructions = (
+    type: string,
+    start: number,
+    end: number,
+    questions?: any[],
+  ) => {
+    // Birinchi question'dan instruction olish (group level)
+    const customInstruction = questions?.[0]?.instruction;
+
+    // Default instructions (fallback)
+    const defaultInstructions: {
+      [key: string]: { title: string; text: string };
+    } = {
       "multiple-choice": {
         title: `Questions ${start}-${end}`,
         text: "Choose the correct letter: A, B, C, or D.",
@@ -383,32 +590,85 @@ export default function ReadingTestPage() {
         title: `Questions ${start}-${end}`,
         text: "Do the following statements agree with the information given in Reading Passage?\nIn boxes on your answer sheet, write\nTRUE if the statement agrees with the information\nFALSE if the statement contradicts the information\nNOT GIVEN if there is no information on this",
       },
+      "yes-no-not-given": {
+        title: `Questions ${start}-${end}`,
+        text: "Do the following statements agree with the views/claims of the writer in Reading Passage?\nIn boxes on your answer sheet, write\nYES if the statement agrees with the views/claims of the writer\nNO if the statement contradicts the views/claims of the writer\nNOT GIVEN if it is impossible to say what the writer thinks about this",
+      },
       matching: {
         title: `Questions ${start}-${end}`,
         text: "Match each statement with the correct option.",
       },
+      "matching-headings": {
+        title: `Questions ${start}-${end}`,
+        text: "The reading passage has several paragraphs. Choose the correct heading for each paragraph from the list of headings below.",
+      },
+      "matching-headings-drag-drop": {
+        title: `Questions ${start}-${end}`,
+        text: "The passage has several paragraphs, A-G. Choose the correct heading for each paragraph from the list of headings below by dragging and dropping.",
+      },
+      "matching-sentence-endings": {
+        title: `Questions ${start}-${end}`,
+        text: "Complete each sentence with the correct ending, A-H, below.",
+      },
+      "matching-features": {
+        title: `Questions ${start}-${end}`,
+        text: "Match each statement with the correct person/date/place. You may use any letter more than once.",
+      },
+      "matching-information": {
+        title: `Questions ${start}-${end}`,
+        text: "The reading passage has several paragraphs, A-F. Which paragraph contains the following information?",
+      },
+      "summary-completion": {
+        title: `Questions ${start}-${end}`,
+        text: "Complete the summary below. Choose NO MORE THAN TWO WORDS from the passage for each answer.",
+      },
+      "summary-completion-box": {
+        title: `Questions ${start}-${end}`,
+        text: "Complete the summary below. Choose ONE WORD ONLY from the box for each answer.",
+      },
+      "summary-completion-with-text": {
+        title: `Questions ${start}-${end}`,
+        text: "Complete the summary using the list of words, A-K, below.",
+      },
+      "note-completion": {
+        title: `Questions ${start}-${end}`,
+        text: "Complete the notes below. Write NO MORE THAN TWO WORDS AND/OR A NUMBER for each answer.",
+      },
+      "table-completion": {
+        title: `Questions ${start}-${end}`,
+        text: "Complete the table below. Write NO MORE THAN TWO WORDS from the passage for each answer.",
+      },
+      "flow-chart-completion": {
+        title: `Questions ${start}-${end}`,
+        text: "Complete the flow-chart below. Choose NO MORE THAN TWO WORDS from the passage for each answer.",
+      },
+      "diagram-labeling": {
+        title: `Questions ${start}-${end}`,
+        text: "Label the diagram below. Choose NO MORE THAN TWO WORDS from the passage for each answer.",
+      },
       "sentence-completion": {
         title: `Questions ${start}-${end}`,
-        text: "Complete the sentences. Write ONE WORD ONLY.",
+        text: "Complete the sentences below. Write NO MORE THAN TWO WORDS from the passage for each answer.",
       },
       "short-answer": {
         title: `Questions ${start}-${end}`,
-        text: "Answer the questions. Write NO MORE THAN THREE WORDS.",
+        text: "Answer the questions below. Write NO MORE THAN THREE WORDS AND/OR A NUMBER for each answer.",
       },
     };
 
-    const instruction = instructions[type] || {
+    // Custom instruction bor bo'lsa - ishlatish, yo'q bo'lsa - default
+    const defaultInstruction = defaultInstructions[type] || {
       title: `Questions ${start}-${end}`,
       text: "Read the instructions carefully.",
     };
 
     return (
-      <div className="bg-linear-to-r from-purple-50 to-purple-50 border-l-4 border-purple-500 p-3 rounded-r-lg mb-4 shadow-sm">
+      <div className="bg-purple-50 border-l-4 border-purple-500 p-3 rounded-r-lg mb-4 shadow-sm">
         <p className="font-bold text-gray-900 mb-1.5 text-sm">
-          {instruction.title}
+          {defaultInstruction.title}
         </p>
         <p className="text-xs text-gray-700 whitespace-pre-line leading-relaxed">
-          {instruction.text}
+          {customInstruction || defaultInstruction.text}
         </p>
       </div>
     );
@@ -531,9 +791,7 @@ export default function ReadingTestPage() {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-purple-500 mt-0.5">•</span>
-                  <span>
-                    Timer will start when you click &quot;Start Test&quot;
-                  </span>
+                  <span>Timer will start when you click "Start Test"</span>
                 </li>
               </ul>
             </div>
@@ -733,17 +991,16 @@ export default function ReadingTestPage() {
     },
   ];
 
-  const renderHighlighted = () => {
-    const passageNumber = currentPassage.passageNumber;
-    const passageHighlights = highlights[passageNumber] || [];
+  const renderHighlighted = (text: string, contextKey: string) => {
+    const contextHighlights = highlights[contextKey] || [];
 
     let last = 0;
     const nodes: JSX.Element[] = [];
-    const sorted = [...passageHighlights].sort((a, b) => a.start - b.start);
+    const sorted = [...contextHighlights].sort((a, b) => a.start - b.start);
 
     sorted.forEach((h, i) => {
-      const before = currentPassage.content.slice(last, h.start);
-      const body = currentPassage.content.slice(h.start, h.end);
+      const before = text.slice(last, h.start);
+      const body = text.slice(h.start, h.end);
       const color = HIGHLIGHT_COLORS.find((c) => c.name === h.color)!;
 
       nodes.push(<span key={`txt-${i}`}>{before}</span>);
@@ -763,8 +1020,131 @@ export default function ReadingTestPage() {
       last = h.end;
     });
 
-    nodes.push(<span key="tail">{currentPassage.content.slice(last)}</span>);
+    nodes.push(<span key="tail">{text.slice(last)}</span>);
     return <>{nodes}</>;
+  };
+
+  // Render question text with inline inputs
+  const renderQuestionText = (question: any) => {
+    const questionText = question.question;
+    const hasUnderscore = /_{2,}/g.test(questionText);
+    const isFlagged = flaggedQuestions.has(question.questionNumber);
+
+    if (!hasUnderscore) {
+      return (
+        <span className="text-gray-800" style={{ whiteSpace: "pre-wrap" }}>
+          {questionText}
+        </span>
+      );
+    }
+
+    // Split by underscores and create inline inputs
+    const parts = questionText.split(/_{2,}/g);
+
+    return (
+      <span className="inline group" style={{ whiteSpace: "pre-wrap" }}>
+        {parts.map((part: any, idx: any) => (
+          <React.Fragment key={idx}>
+            {part && (
+              <span
+                className="text-gray-800 inline"
+                style={{ whiteSpace: "pre-wrap" }}
+              >
+                {processText(part)}
+              </span>
+            )}
+            {idx < parts.length - 1 && (
+              <span className="peer-span inline-flex items-center [&:hover>button]:w-5 [&:hover>button]:ml-1">
+                <input
+                  type="text"
+                  placeholder={`${question.questionNumber}`}
+                  value={answers[question.questionNumber] || ""}
+                  onChange={(e) =>
+                    handleAnswerChange(question.questionNumber, e.target.value)
+                  }
+                  className={`border rounded-md focus:border-gray-600 focus:ring-0 
+    p-0 text-sm text-gray-800 
+    font-medium transition-all ${
+      isFlagged
+        ? "border-yellow-400 bg-yellow-100"
+        : "border-gray-400 bg-transparent"
+    }`}
+                  style={{
+                    direction: "ltr",
+                    textAlign: answers[question.questionNumber]
+                      ? "left"
+                      : "center",
+                    width: answers[question.questionNumber]
+                      ? `${answers[question.questionNumber].length}ch`
+                      : "7rem",
+                    minWidth: "7rem",
+                    maxWidth: "20ch",
+                    padding: 0,
+                  }}
+                />
+                <button
+                  onClick={() => toggleFlag(question.questionNumber)}
+                  className={`transition-all overflow-hidden ${
+                    isFlagged
+                      ? "text-yellow-500 w-5 ml-1"
+                      : "text-gray-300 hover:text-yellow-400 w-0"
+                  }`}
+                >
+                  <Bookmark
+                    size={20}
+                    // height={200}
+                    fill={isFlagged ? "currentColor" : "none"}
+                  />
+                </button>
+              </span>
+            )}
+          </React.Fragment>
+        ))}
+      </span>
+    );
+  };
+
+  // Text processing: bB bold qilish va 1rem margin
+  const processText = (text: string) => {
+    if (!text) return text;
+
+    // Old format support: "1rem" at start
+    const hasOldMargin = text.startsWith("1rem");
+    if (hasOldMargin) {
+      const cleanText = text.slice(4);
+      const convertedText = cleanText.replace(/bB([^bB]*)bB/g, "**$1**");
+      return (
+        <span className="ml-4 inline-block">
+          <TextFormatter text={convertedText} />
+        </span>
+      );
+    }
+
+    // New format: Use TextFormatter with multiline margin support (1r, 2r, 3r...)
+    const convertedText = text.replace(/bB([^bB]*)bB/g, "**$1**");
+    return <TextFormatter text={convertedText} />;
+  };
+
+  // Context text processing - 1rem va bB support + markdown
+  const processContextText = (text: string) => {
+    if (!text) return text;
+
+    // Old format support: "1rem" at start
+    const hasOldMargin = text.startsWith("1rem");
+    if (hasOldMargin) {
+      const cleanText = text.slice(4);
+      const convertedText = cleanText.replace(/bB([^bB]*)bB/g, "**$1**");
+      return (
+        <span className="ml-4 inline-block">
+          <TextFormatter text={convertedText} />
+        </span>
+      );
+    }
+
+    // New format: Use TextFormatter with multiline margin support (1r, 2r, 3r...)
+    // TextFormatter handles: **bold**, *italic*, __underline__, 1r margin, 2r margin, etc.
+    const convertedText = text.replace(/bB([^bB]*)bB/g, "**$1**");
+    return <TextFormatter text={convertedText} />;
   };
 
   const currentPassage = test.passages[currentPart];
@@ -776,11 +1156,15 @@ export default function ReadingTestPage() {
     currentPassage.questions?.[currentPassage.questions.length - 1]
       ?.questionNumber ?? currentPassage.questions.length;
 
+  // Get all questions text for highlighting
+  const allQuestionsText = currentPassage.questions
+    .map((q: any) => `${q.questionNumber}. ${q.question}`)
+    .join("\n");
   return (
     <div className="h-screen flex flex-col bg-linear-to-br from-gray-50 to-slate-50">
       {/* Submit Modal */}
       {showSubmitModal && (
-        <div className="fixed inset-0 bg-opacity-60 flex items-center justify-center z-50 p-4 bg-black/50 backdrop-blur-sm">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl border border-purple-100">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-bold text-gray-800">Submit Test?</h3>
@@ -831,14 +1215,15 @@ export default function ReadingTestPage() {
       )}
 
       {/* Note Modal */}
-      {noteModal && activeIndex !== null && (
-        <div className="fixed inset-0  bg-opacity-50 bg-black/50 backdrop-blur-md flex items-center justify-center z-50">
+      {noteModal && activeKey !== null && activeIndex !== null && (
+        <div className="note-modal fixed inset-0 bg-black/50 backdrop-blur-md flex items-center justify-center z-50">
           <div className="bg-white rounded-xl shadow-2xl p-6 w-96 border border-gray-200">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-gray-800">Add Note</h3>
               <button
                 onClick={() => {
                   setNoteModal(false);
+                  setActiveKey(null);
                   setActiveIndex(null);
                 }}
                 className="text-gray-400 hover:text-gray-600 transition"
@@ -858,6 +1243,7 @@ export default function ReadingTestPage() {
               <button
                 onClick={() => {
                   setNoteModal(false);
+                  setActiveKey(null);
                   setActiveIndex(null);
                 }}
                 className="px-4 py-2 text-sm border-2 border-gray-300 rounded-lg hover:bg-gray-50 font-semibold transition"
@@ -866,18 +1252,18 @@ export default function ReadingTestPage() {
               </button>
               <button
                 onClick={() => {
-                  if (activeIndex !== null) {
-                    const passageNum = currentPassage.passageNumber;
-                    const passageHighlights = [
-                      ...(highlights[passageNum] || []),
+                  if (activeKey && activeIndex !== null) {
+                    const contextHighlights = [
+                      ...(highlights[activeKey] || []),
                     ];
-                    passageHighlights[activeIndex].note = noteText;
+                    contextHighlights[activeIndex].note = noteText;
                     setHighlights((prev) => ({
                       ...prev,
-                      [passageNum]: passageHighlights,
+                      [activeKey]: contextHighlights,
                     }));
                   }
                   setNoteModal(false);
+                  setActiveKey(null);
                   setActiveIndex(null);
                 }}
                 className="px-4 py-2 text-sm bg-purple-500 text-white rounded-lg hover:bg-purple-600 font-semibold shadow transition"
@@ -888,11 +1274,11 @@ export default function ReadingTestPage() {
           </div>
         </div>
       )}
+
       {/* Info Modal */}
       {infoModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div className="bg-white max-w-md w-full rounded-2xl shadow-2xl p-6 relative">
-            {/* Close */}
             <button
               onClick={() => setInfoModal(false)}
               className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
@@ -900,12 +1286,10 @@ export default function ReadingTestPage() {
               ✕
             </button>
 
-            {/* Title */}
             <h2 className="text-xl font-bold text-gray-800 mb-3">
               How to use Highlight & Notes
             </h2>
 
-            {/* Content */}
             <ul className="space-y-2 text-sm text-gray-600 leading-relaxed">
               <li>• Select any part of the passage text using your mouse.</li>
               <li>
@@ -920,7 +1304,6 @@ export default function ReadingTestPage() {
               </li>
             </ul>
 
-            {/* Tip */}
             <div className="mt-4 p-3 bg-purple-50 text-purple-700 text-xs rounded-lg">
               💡 Tip: Avoid highlighting too much. Focus on keywords, names, and
               dates.
@@ -928,6 +1311,7 @@ export default function ReadingTestPage() {
           </div>
         </div>
       )}
+
       {/* Header - Compact */}
       <header className="bg-[#9C74FF] shadow-lg shrink-0">
         <div className="max-w-full mx-auto px-6 py-2.5 flex items-center justify-between">
@@ -965,22 +1349,17 @@ export default function ReadingTestPage() {
                   : "bg-white/10 text-white hover:bg-white/20"
               }`}
             >
-              📝 Notes
-            </button>
-            <button
-              onClick={() => setShowSubmitModal(true)}
-              className="bg-white text-[#9C74FF] px-5 py-1.5 rounded-lg font-bold text-sm hover:bg-[#6931f7] transition-all shadow-lg"
-            >
-              Submit Test
+              <span title="View Notes">
+                <NotebookPenIcon />
+              </span>
             </button>
           </div>
         </div>
       </header>
 
       {/* Part Info Banner - Compact */}
-      <div className="bg-[#9C74FF] border-t border-amber-50 shrink-0 shadow-sm">
+      <div className="bg-[#9C74FF] border-t border-white/20 shrink-0 shadow-sm">
         <div className="max-w-full mx-auto px-6 py-2 text-white flex items-center justify-between">
-          {/* Chap tomondagi text */}
           <div>
             <h2 className="text-base font-bold">
               READING PASSAGE {currentPart + 1}
@@ -992,7 +1371,6 @@ export default function ReadingTestPage() {
             </p>
           </div>
 
-          {/* O'ng tomondagi info button */}
           <button
             onClick={() => setInfoModal(true)}
             className="shrink-0 p-2 rounded-full hover:bg-white/20 transition"
@@ -1007,7 +1385,7 @@ export default function ReadingTestPage() {
         <div ref={containerRef} className="h-full flex p-6 gap-0">
           {/* Passage */}
           <div
-            className="bg-white rounded-l-2xl shadow-xl flex flex-col overflow-hidden border-2 border-r-0 border-purple-100"
+            className=" bg-white rounded-l-2xl shadow-xl flex flex-col overflow-hidden border-2 border-r-0 border-purple-100"
             style={{ width: `${leftWidth}%` }}
           >
             <div className="px-8 py-6 border-b-2 border-purple-100 shrink-0 bg-linear-to-r from-white to-purple-50">
@@ -1019,93 +1397,130 @@ export default function ReadingTestPage() {
               className="flex-1 overflow-y-auto px-8 py-6"
               ref={passageContainerRef}
             >
-              <div
-                className="prose prose-lg max-w-none text-gray-800 leading-[1.8] whitespace-pre-wrap passage-content"
-                style={{ textAlign: "justify" }}
-              >
-                {renderHighlighted()}
+              <div className="prose prose-lg max-w-none text-gray-800 leading-relaxed passage-content">
+                {currentPassage.hasParagraphs &&
+                currentPassage.paragraphs &&
+                currentPassage.paragraphs.length > 0
+                  ? // With Paragraphs or With Input Paragraphs
+                    currentPassage.paragraphs.map(
+                      (para: string, idx: number) => {
+                        const paragraphLabel = String.fromCharCode(65 + idx);
+
+                        // Drag-drop question va question number topish
+                        const dragDropQuestion = currentPassage.questions?.find(
+                          (q: any) =>
+                            q.questionType === "matching-headings-drag-drop",
+                        );
+                        const baseQuestionNum =
+                          dragDropQuestion?.questionNumber || 0;
+                        const questionNum = baseQuestionNum + idx;
+                        const currentAnswer = answers[questionNum];
+
+                        return (
+                          <div key={idx} className="mb-8">
+                            {/* Drop Zone - PARAGRAPH OLDIN */}
+                            {currentPassage.hasInputParagraphs && (
+                              <div className="mb-3 flex items-center gap-3">
+                                <span className="font-bold text-lg text-gray-900 shrink-0 w-8">
+                                  {paragraphLabel}
+                                </span>
+                                <div
+                                  className="flex-1 border-2 border-dashed border-purple-300 rounded-lg p-4 bg-purple-50 min-h-[70px] transition-all hover:border-purple-500 hover:bg-purple-100 hover:shadow-md"
+                                  onDragOver={(e) => {
+                                    e.preventDefault();
+                                    e.currentTarget.classList.add(
+                                      "border-purple-600",
+                                      "bg-purple-200",
+                                      "shadow-lg",
+                                    );
+                                  }}
+                                  onDragLeave={(e) => {
+                                    e.currentTarget.classList.remove(
+                                      "border-purple-600",
+                                      "bg-purple-200",
+                                      "shadow-lg",
+                                    );
+                                  }}
+                                  onDrop={(e) => {
+                                    e.preventDefault();
+                                    e.currentTarget.classList.remove(
+                                      "border-purple-600",
+                                      "bg-purple-200",
+                                      "shadow-lg",
+                                    );
+                                    const heading =
+                                      e.dataTransfer.getData("text/plain");
+                                    if (heading && dragDropQuestion) {
+                                      handleAnswerChange(questionNum, heading);
+                                    }
+                                  }}
+                                >
+                                  {currentAnswer ? (
+                                    <div className="flex items-center justify-between">
+                                      <div className="flex items-center gap-3">
+                                        <span className="font-bold text-purple-600 text-lg">
+                                          {questionNum}.
+                                        </span>
+                                        <span className="text-gray-800 font-semibold">
+                                          {currentAnswer}
+                                        </span>
+                                      </div>
+                                      <button
+                                        onClick={() =>
+                                          handleAnswerChange(questionNum, "")
+                                        }
+                                        className="text-red-500 hover:text-red-700 text-2xl font-bold transition-all hover:scale-110"
+                                        title="Remove heading"
+                                      >
+                                        ×
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center justify-center gap-2 text-purple-400">
+                                      <span className="text-sm font-medium">
+                                        Drop heading for Paragraph{" "}
+                                        {paragraphLabel} here
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Paragraph Text */}
+                            <div className="flex gap-3 items-start">
+                              {!currentPassage.hasInputParagraphs && (
+                                <span className="font-bold text-lg text-gray-900 shrink-0">
+                                  {paragraphLabel}
+                                </span>
+                              )}
+                              <div
+                                className={`flex-1 ${currentPassage.hasInputParagraphs ? "ml-11" : ""}`}
+                              >
+                                {renderHighlighted(
+                                  para,
+                                  `passage-${currentPassage.passageNumber}-para-${idx}`,
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      },
+                    )
+                  : // Normal passage
+                    renderHighlighted(
+                      currentPassage.content,
+                      `passage-${currentPassage.passageNumber}`,
+                    )}
               </div>
-              {sel && (
-                <div
-                  className="fixed z-50 flex items-center gap-2 bg-white shadow-xl rounded-full p-2 border border-gray-200"
-                  style={{ left: sel.clientX, top: sel.clientY }}
-                >
-                  {/* X button - popupni yopish */}
-                  <button
-                    onClick={() => {
-                      setSel(null);
-                      window.getSelection()?.removeAllRanges();
-                    }}
-                    className="w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-gray-600 transition"
-                    aria-label="Close"
-                  >
-                    <X size={16} />
-                  </button>
-
-                  <div className="w-px h-6 bg-gray-300"></div>
-
-                  {/* 3 ta rang */}
-                  {HIGHLIGHT_COLORS.map((c) => (
-                    <button
-                      key={c.name}
-                      onClick={() => {
-                        const passageNum = currentPassage.passageNumber;
-                        setHighlights((prev) => ({
-                          ...prev,
-                          [passageNum]: [
-                            ...(prev[passageNum] || []),
-                            { start: sel.start, end: sel.end, color: c.name },
-                          ],
-                        }));
-                        setSel(null);
-                        window.getSelection()?.removeAllRanges();
-                      }}
-                      className={`w-8 h-8 rounded-full ${c.bg} ${c.hover} transition`}
-                      aria-label={c.name}
-                    />
-                  ))}
-
-                  <div className="w-px h-6 bg-gray-300"></div>
-
-                  {/* PLUS btn - note qo'shish */}
-                  <button
-                    onClick={() => {
-                      const passageNum = currentPassage.passageNumber;
-                      const currentPassageHighlights =
-                        highlights[passageNum] || [];
-                      setHighlights((prev) => ({
-                        ...prev,
-                        [passageNum]: [
-                          ...currentPassageHighlights,
-                          {
-                            start: sel.start,
-                            end: sel.end,
-                            color: "yellow",
-                            note: "",
-                          },
-                        ],
-                      }));
-                      setActiveIndex(currentPassageHighlights.length);
-                      setNoteText("");
-                      setSel(null);
-                      window.getSelection()?.removeAllRanges();
-                      setNoteModal(true);
-                    }}
-                    className="w-8 h-8 rounded-full bg-gray-800 text-white hover:bg-gray-900 flex items-center justify-center transition"
-                    aria-label="Add note"
-                  >
-                    +
-                  </button>
-                </div>
-              )}
             </div>
           </div>
 
           {/* Resizer */}
           <div
             onMouseDown={handleMouseDown}
-            className={`w-3 bg-[#9C74FF] hover:from-purple-500 hover:to-purple-600 cursor-col-resize flex items-center justify-center transition-all shadow-lg ${
-              isDragging ? "from-purple-500 to-purple-600" : ""
+            className={`w-3 bg-[#9C74FF] hover:bg-purple-600 cursor-col-resize flex items-center justify-center transition-all shadow-lg ${
+              isDragging ? "bg-purple-600" : ""
             }`}
           >
             <GripVertical size={18} className="text-white drop-shadow-md" />
@@ -1119,181 +1534,204 @@ export default function ReadingTestPage() {
             <div className="px-8 py-6 border-b-2 border-purple-100 shrink-0 bg-linear-to-r from-purple-50 to-white">
               <h3 className="text-2xl font-bold text-gray-900">Questions</h3>
             </div>
-            <div className="flex-1 overflow-y-auto px-8 py-6">
-              <div className="space-y-8">
+
+            <div
+              className="flex-1 overflow-y-auto px-8 py-6 questions-content"
+              ref={questionContainerRef}
+            >
+              <div>
                 {questionGroups.map((group, groupIndex) => (
-                  <div key={groupIndex} className="space-y-4">
-                    {renderInstructions(group.type, group.start, group.end)}
-                    {group.questions.map((question: any) => (
-                      <div
-                        key={question.questionNumber}
-                        className={`space-y-3 group relative transition-all ${
-                          flaggedQuestions.has(question.questionNumber)
-                            ? "bg-linear-to-r from-red-50 to-rose-50 border-2 border-red-300 rounded-xl p-5 shadow-md"
-                            : "hover:bg-gray-50 rounded-xl p-2"
-                        }`}
-                      >
-                        <div className="flex gap-3">
-                          <div className="flex items-start gap-2 shrink-0">
-                            <span className="font-bold text-gray-800 text-lg">
-                              {question.questionNumber}.
-                            </span>
-                            <button
-                              onClick={() =>
-                                toggleFlag(question.questionNumber)
-                              }
-                              className={`mt-1 transition-all ${
-                                flaggedQuestions.has(question.questionNumber)
-                                  ? "opacity-100 scale-110"
-                                  : "opacity-0 group-hover:opacity-100"
-                              }`}
-                              title="Flag for review"
-                            >
-                              <Flag
-                                size={18}
-                                className={
-                                  flaggedQuestions.has(question.questionNumber)
-                                    ? "fill-red-500 text-red-500 drop-shadow-md"
-                                    : "text-gray-400 hover:text-red-500"
-                                }
-                              />
-                            </button>
-                          </div>
+                  <div key={groupIndex}>
+                    {renderInstructions(
+                      group.type,
+                      group.start,
+                      group.end,
+                      group.questions,
+                    )}
 
-                          <div className="flex-1">
-                            {/* Dynamic input placement for text-based questions */}
-                            {question.questionType === "sentence-completion" ||
-                            question.questionType === "short-answer" ? (
-                              (() => {
-                                const questionText = question.question;
-                                // Match 2 or more consecutive underscores
-                                const underscorePattern = /_{2,}/g;
-                                const hasUnderscore =
-                                  underscorePattern.test(questionText);
+                    {/* Display options box for matching types BEFORE questions */}
+                    {(group.type === "matching-sentence-endings" ||
+                      group.type === "matching-headings" ||
+                      group.type === "matching-headings-drag-drop" ||
+                      group.type === "matching-features" ||
+                      group.type === "summary-completion-with-text") &&
+                      group.allOptions &&
+                      group.allOptions.length > 0 && (
+                        <div className="bg-gray-50 border-2 border-gray-300 rounded-lg p-4 mb-6">
+                          {group.type === "matching-headings-drag-drop" ? (
+                            // Draggable headings
+                            <div>
+                              {/* Instruction - backend'dan */}
+                              {group.instruction && (
+                                <p className="text-sm text-gray-700 mb-3 italic">
+                                  {group.instruction}
+                                </p>
+                              )}
+                              <div className="grid grid-cols-1 gap-2">
+                                {group.allOptions.map(
+                                  (option: string, idx: number) => {
+                                    // Bu heading ishlatilganmi tekshirish
+                                    const isUsed =
+                                      Object.values(answers).includes(option);
 
-                                if (hasUnderscore) {
-                                  // Split by underscores and insert input
-                                  const parts =
-                                    questionText.split(underscorePattern);
+                                    // Agar ishlatilgan bo'lsa - ko'rsatmaslik
+                                    if (isUsed) {
+                                      return (
+                                        <div
+                                          key={idx}
+                                          className="flex gap-2 items-center bg-gray-200 border-2 border-gray-300 rounded-lg p-3 opacity-50"
+                                        >
+                                          <span className="font-bold text-gray-400 shrink-0">
+                                            {toRoman(idx + 1)}
+                                          </span>
+                                          <span className="text-gray-500 font-medium line-through">
+                                            {option}
+                                          </span>
+                                          <span className="ml-auto text-green-600 text-sm font-bold">
+                                            ✓ Used
+                                          </span>
+                                        </div>
+                                      );
+                                    }
 
-                                  return (
-                                    <div className="flex items-center gap-2 mb-4 flex-wrap">
-                                      {parts.map((part: any, idx: any) => (
-                                        <React.Fragment key={idx}>
-                                          {part && (
-                                            <span className="text-gray-800 leading-relaxed">
-                                              {part}
-                                            </span>
-                                          )}
-                                          {idx < parts.length - 1 && (
-                                            <input
-                                              type="text"
-                                              className="flex-1 border rounded mb-2 min-w-[100px] max-w-xs px-3 py-1.5 border-b-2 border-gray-300 focus:outline-none focus:border-[#9C74FF] text-gray-800 font-medium text-sm bg-transparent transition-colors"
-                                              placeholder="Your answer"
-                                              value={
-                                                answers[
-                                                  question.questionNumber
-                                                ] || ""
-                                              }
-                                              onChange={(e) =>
-                                                handleAnswerChange(
-                                                  question.questionNumber,
-                                                  e.target.value,
-                                                )
-                                              }
-                                            />
-                                          )}
-                                        </React.Fragment>
-                                      ))}
-                                    </div>
-                                  );
-                                } else {
-                                  // No underscores - put input at the end
-                                  return (
-                                    <div className="flex items-center gap-3 mb-4">
-                                      <p className="text-gray-800 leading-relaxed shrink-0">
-                                        {questionText}
-                                      </p>
-                                      <input
-                                        type="text"
-                                        className="flex-1 border rounded mb-2 min-w-[200px] max-w-xs px-3 py-1.5 border-b-2 border-gray-300 focus:outline-none focus:border-[#9C74FF] text-gray-800 font-medium text-sm bg-transparent transition-colors"
-                                        placeholder="Your answer"
-                                        value={
-                                          answers[question.questionNumber] || ""
-                                        }
-                                        onChange={(e) =>
-                                          handleAnswerChange(
-                                            question.questionNumber,
-                                            e.target.value,
-                                          )
-                                        }
-                                      />
-                                    </div>
-                                  );
-                                }
-                              })()
-                            ) : (
-                              <p className="text-gray-800 mb-4 leading-relaxed">
-                                {question.question}
-                              </p>
-                            )}
-
-                            {question.questionType === "multiple-choice" &&
-                              question.options && (
-                                <div className="space-y-2">
-                                  {question.options.map(
-                                    (option: string, idx: number) => (
-                                      <label
+                                    return (
+                                      <div
                                         key={idx}
-                                        className={`flex items-center gap-4 p-4 border-2 rounded-xl cursor-pointer transition-all ${
-                                          answers[question.questionNumber] ===
-                                          option
-                                            ? "bg-purple-50 border-purple-400 shadow-md"
-                                            : "border-gray-200 hover:border-purple-300 hover:bg-purple-50/30"
-                                        }`}
+                                        draggable
+                                        onDragStart={(e) => {
+                                          e.dataTransfer.setData(
+                                            "text/plain",
+                                            option,
+                                          );
+                                          e.currentTarget.style.opacity = "0.5";
+                                        }}
+                                        onDragEnd={(e) => {
+                                          e.currentTarget.style.opacity = "1";
+                                        }}
+                                        className="flex gap-2 items-center bg-white border-2 border-purple-200 rounded-lg p-3 cursor-move hover:border-purple-400 hover:shadow-md transition-all"
                                       >
-                                        <input
-                                          type="radio"
-                                          name={`question-${question.questionNumber}`}
-                                          value={option}
-                                          checked={
-                                            answers[question.questionNumber] ===
-                                            option
-                                          }
-                                          onChange={(e) =>
-                                            handleAnswerChange(
-                                              question.questionNumber,
-                                              e.target.value,
-                                            )
-                                          }
-                                          className="w-5 h-5 text-purple-600 focus:ring-2 focus:ring-purple-500"
-                                        />
+                                        <span className="font-bold text-purple-600 shrink-0">
+                                          {toRoman(idx + 1)}
+                                        </span>
                                         <span className="text-gray-800 font-medium">
                                           {option}
                                         </span>
-                                      </label>
-                                    ),
-                                  )}
-                                </div>
+                                        <span className="ml-auto text-gray-400 text-xs">
+                                          ⋮⋮
+                                        </span>
+                                      </div>
+                                    );
+                                  },
+                                )}
+                              </div>
+                            </div>
+                          ) : (
+                            // Normal options box
+                            <div className="grid grid-cols-1 gap-2">
+                              {group.allOptions.map(
+                                (option: string, idx: number) => (
+                                  <div key={idx} className="flex gap-2">
+                                    <span className="font-bold text-gray-900 shrink-0">
+                                      {group.type === "matching-headings"
+                                        ? toRoman(idx + 1)
+                                        : String.fromCharCode(65 + idx)}
+                                    </span>
+                                    <span className="text-gray-800">
+                                      {option}
+                                    </span>
+                                  </div>
+                                ),
                               )}
+                            </div>
+                          )}
+                        </div>
+                      )}
 
-                            {question.questionType ===
-                              "true-false-not-given" && (
-                              <div className="space-y-2">
-                                {["TRUE", "FALSE", "NOT GIVEN"].map(
-                                  (option) => (
+                    {group.questions.map((question: any) => {
+                      const questionText = question.question;
+                      const hasUnderscore = /_{2,}/g.test(questionText);
+
+                      return (
+                        <React.Fragment key={question.questionNumber}>
+                          {/* ✅ Context Text - har bir questiondan oldin */}
+                          {question?.contextText && (
+                            <pre className="text-gray-800 whitespace-pre-wrap font-sans text-base leading-relaxed m-0">
+                              {processContextText(question.contextText)}
+                            </pre>
+                          )}
+
+                          {/* Sentence completion or questions with underscores - inline input */}
+                          {hasUnderscore ? (
+                            <div
+                              id={`question-${question.questionNumber}`}
+                              className="leading-relaxed scroll-mt-6"
+                            >
+                              {renderQuestionText(question)}
+                            </div>
+                          ) : // Multiple choice with radio buttons
+                          question.questionType === "multiple-choice" &&
+                            question.options ? (
+                            <div
+                              id={`question-${question.questionNumber}`}
+                              className={`mb-6 scroll-mt-6 ${
+                                flaggedQuestions.has(question.questionNumber)
+                                  ? "bg-yellow-50 border-2 border-yellow-200 rounded-lg p-4 -m-4"
+                                  : ""
+                              }`}
+                            >
+                              <div className="flex items-baseline gap-2">
+                                <button
+                                  onClick={() =>
+                                    toggleFlag(question.questionNumber)
+                                  }
+                                  className={`shrink-0 transition-all ${
+                                    flaggedQuestions.has(
+                                      question.questionNumber,
+                                    )
+                                      ? "text-yellow-500"
+                                      : "text-gray-300 hover:text-yellow-400"
+                                  }`}
+                                  title={
+                                    flaggedQuestions.has(
+                                      question.questionNumber,
+                                    )
+                                      ? "Unflag question"
+                                      : "Flag question"
+                                  }
+                                >
+                                  <Flag
+                                    size={18}
+                                    fill={
+                                      flaggedQuestions.has(
+                                        question.questionNumber,
+                                      )
+                                        ? "currentColor"
+                                        : "none"
+                                    }
+                                  />
+                                </button>
+                                <span className="font-bold text-gray-900 shrink-0">
+                                  {question.questionNumber}.
+                                </span>
+                                <p className="text-gray-800 font-medium flex-1">
+                                  {processText(questionText)}
+                                </p>
+                              </div>
+                              <div className="space-y-2 pl-6 mt-3">
+                                {question.options.map(
+                                  (option: string, idx: number) => (
                                     <label
-                                      key={option}
-                                      className={`flex items-center gap-4 p-2 border-2 rounded-xl cursor-pointer transition-all ${
+                                      key={idx}
+                                      className={`flex items-center gap-3 p-3 border-2 rounded-lg cursor-pointer transition-all ${
                                         answers[question.questionNumber] ===
                                         option
-                                          ? "bg-purple-50 border-purple-400 shadow-md"
-                                          : "border-gray-200 hover:border-purple-300 hover:bg-purple-50/30"
+                                          ? "bg-purple-50 border-purple-400"
+                                          : "border-gray-200 hover:bg-gray-50"
                                       }`}
                                     >
                                       <input
                                         type="radio"
-                                        name={`question-${question.questionNumber}`}
+                                        name={`q-${question.questionNumber}`}
                                         value={option}
                                         checked={
                                           answers[question.questionNumber] ===
@@ -1305,21 +1743,172 @@ export default function ReadingTestPage() {
                                             e.target.value,
                                           )
                                         }
-                                        className="w-3 h-3 text-purple-600 focus:ring-2 focus:ring-purple-500"
+                                        className="text-[#9C74FF] focus:ring-[#9C74FF]"
                                       />
-                                      <span className="text-gray-800 font-semibold">
+                                      <span className="text-gray-800">
                                         {option}
                                       </span>
                                     </label>
                                   ),
                                 )}
                               </div>
-                            )}
+                            </div>
+                          ) : // True/False/Not Given or Yes/No/Not Given - horizontal buttons
+                          question.questionType === "true-false-not-given" ||
+                            question.questionType === "yes-no-not-given" ? (
+                            <div
+                              id={`question-${question.questionNumber}`}
+                              className={`mb-6 scroll-mt-6 ${
+                                flaggedQuestions.has(question.questionNumber)
+                                  ? "bg-yellow-50 border-2 border-yellow-200 rounded-lg p-4 -m-4"
+                                  : ""
+                              }`}
+                            >
+                              <div className="flex items-baseline gap-2 mb-3">
+                                <button
+                                  onClick={() =>
+                                    toggleFlag(question.questionNumber)
+                                  }
+                                  className={`shrink-0 transition-all ${
+                                    flaggedQuestions.has(
+                                      question.questionNumber,
+                                    )
+                                      ? "text-yellow-500"
+                                      : "text-gray-300 hover:text-yellow-400"
+                                  }`}
+                                  title={
+                                    flaggedQuestions.has(
+                                      question.questionNumber,
+                                    )
+                                      ? "Unflag question"
+                                      : "Flag question"
+                                  }
+                                >
+                                  <Flag
+                                    size={18}
+                                    fill={
+                                      flaggedQuestions.has(
+                                        question.questionNumber,
+                                      )
+                                        ? "currentColor"
+                                        : "none"
+                                    }
+                                  />
+                                </button>
+                                <span className="font-bold text-gray-900 shrink-0">
+                                  {question.questionNumber}.
+                                </span>
+                                <p className="text-gray-800 font-medium flex-1">
+                                  {processText(questionText)}
+                                </p>
+                              </div>
 
-                            {question.questionType === "matching" &&
-                              question.options && (
+                              <div className="flex gap-3 pl-6">
+                                {(question.questionType ===
+                                "true-false-not-given"
+                                  ? ["TRUE", "FALSE", "NOT GIVEN"]
+                                  : ["YES", "NO", "NOT GIVEN"]
+                                ).map((option) => (
+                                  <label
+                                    key={option}
+                                    className={`flex items-center gap-2 px-4 py-2 border-2 rounded-lg cursor-pointer transition-all ${
+                                      answers[question.questionNumber] ===
+                                      option
+                                        ? "bg-purple-50 border-purple-400"
+                                        : "border-gray-200 hover:bg-gray-50"
+                                    }`}
+                                  >
+                                    <input
+                                      type="radio"
+                                      name={`q-${question.questionNumber}`}
+                                      value={option}
+                                      checked={
+                                        answers[question.questionNumber] ===
+                                        option
+                                      }
+                                      onChange={(e) =>
+                                        handleAnswerChange(
+                                          question.questionNumber,
+                                          e.target.value,
+                                        )
+                                      }
+                                      className="text-[#9C74FF] focus:ring-[#9C74FF]"
+                                    />
+                                    <span className="text-sm font-medium">
+                                      {option}
+                                    </span>
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
+                          ) : // Matching headings drag-drop - NO INPUT (faqat passage'da drop zones)
+                          question.questionType ===
+                            "matching-headings-drag-drop" ? (
+                            <div className="mb-4">
+                              <p className="text-gray-600 text-sm italic">
+                                → Drag headings to paragraphs in the passage
+                              </p>
+                            </div>
+                          ) : // Matching types with dropdown
+                          (question.questionType === "matching" ||
+                              question.questionType ===
+                                "matching-sentence-endings" ||
+                              question.questionType === "matching-headings" ||
+                              question.questionType === "matching-features" ||
+                              question.questionType ===
+                                "matching-information" ||
+                              question.questionType ===
+                                "summary-completion-with-text") &&
+                            question.options ? (
+                            <div
+                              id={`question-${question.questionNumber}`}
+                              className={`mb-4 scroll-mt-6 ${
+                                flaggedQuestions.has(question.questionNumber)
+                                  ? "bg-yellow-50 border-2 border-yellow-200 rounded-lg p-4 -m-4"
+                                  : ""
+                              }`}
+                            >
+                              <div className="flex items-start gap-3">
+                                <button
+                                  onClick={() =>
+                                    toggleFlag(question.questionNumber)
+                                  }
+                                  className={`shrink-0 transition-all mt-2 ${
+                                    flaggedQuestions.has(
+                                      question.questionNumber,
+                                    )
+                                      ? "text-yellow-500"
+                                      : "text-gray-300 hover:text-yellow-400"
+                                  }`}
+                                  title={
+                                    flaggedQuestions.has(
+                                      question.questionNumber,
+                                    )
+                                      ? "Unflag question"
+                                      : "Flag question"
+                                  }
+                                >
+                                  <Flag
+                                    size={18}
+                                    fill={
+                                      flaggedQuestions.has(
+                                        question.questionNumber,
+                                      )
+                                        ? "currentColor"
+                                        : "none"
+                                    }
+                                  />
+                                </button>
+                                <span className="font-bold text-gray-900 shrink-0 mt-2">
+                                  {question.questionNumber}.
+                                </span>
+
+                                <p className="text-gray-800 flex-1 mt-2">
+                                  {processText(questionText)}
+                                </p>
+
                                 <select
-                                  className="w-full px-5 py-4 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-gray-800 font-medium bg-white"
+                                  className="px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-[#9C74FF] bg-white min-w-[120px]"
                                   value={answers[question.questionNumber] || ""}
                                   onChange={(e) =>
                                     handleAnswerChange(
@@ -1328,24 +1917,150 @@ export default function ReadingTestPage() {
                                     )
                                   }
                                 >
-                                  <option value="" className="text-gray-400">
-                                    Choose answer
-                                  </option>
+                                  <option value="">Select</option>
                                   {question.options.map(
-                                    (option: string, idx: number) => (
-                                      <option key={idx} value={option}>
-                                        {option}
-                                      </option>
-                                    ),
+                                    (opt: string, idx: number) => {
+                                      const isHeadings =
+                                        question.questionType ===
+                                        "matching-headings";
+                                      const label = isHeadings
+                                        ? toRoman(idx + 1)
+                                        : String.fromCharCode(65 + idx);
+
+                                      return (
+                                        <option key={idx} value={opt}>
+                                          {label}
+                                        </option>
+                                      );
+                                    },
                                   )}
                                 </select>
-                              )}
+                              </div>
+                            </div>
+                          ) : // Summary completion with box
+                          question.questionType === "summary-completion-box" &&
+                            question.options ? (
+                            <div
+                              id={`question-${question.questionNumber}`}
+                              className={`mb-4 scroll-mt-6 ${
+                                flaggedQuestions.has(question.questionNumber)
+                                  ? "bg-yellow-50 border-2 border-yellow-200 rounded-lg p-4 -m-4"
+                                  : ""
+                              }`}
+                            >
+                              <div className="flex items-baseline gap-2">
+                                <button
+                                  onClick={() =>
+                                    toggleFlag(question.questionNumber)
+                                  }
+                                  className={`shrink-0 transition-all ${
+                                    flaggedQuestions.has(
+                                      question.questionNumber,
+                                    )
+                                      ? "text-yellow-500"
+                                      : "text-gray-300 hover:text-yellow-400"
+                                  }`}
+                                  title={
+                                    flaggedQuestions.has(
+                                      question.questionNumber,
+                                    )
+                                      ? "Unflag question"
+                                      : "Flag question"
+                                  }
+                                >
+                                  <Flag
+                                    size={18}
+                                    fill={
+                                      flaggedQuestions.has(
+                                        question.questionNumber,
+                                      )
+                                        ? "currentColor"
+                                        : "none"
+                                    }
+                                  />
+                                </button>
+                                <div className="flex-1">
+                                  <p className="text-gray-800 mb-2">
+                                    {questionText}
+                                  </p>
 
-                            {/* Other question types keep their original rendering */}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                                  <select
+                                    className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-[#9C74FF] bg-white"
+                                    value={
+                                      answers[question.questionNumber] || ""
+                                    }
+                                    onChange={(e) =>
+                                      handleAnswerChange(
+                                        question.questionNumber,
+                                        e.target.value,
+                                      )
+                                    }
+                                  >
+                                    <option value="">Select from box</option>
+                                    {question.options.map(
+                                      (opt: string, idx: number) => (
+                                        <option key={idx} value={opt}>
+                                          {opt}
+                                        </option>
+                                      ),
+                                    )}
+                                  </select>
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            // Default
+                            <div
+                              id={`question-${question.questionNumber}`}
+                              className={`mb-4 scroll-mt-6 ${
+                                flaggedQuestions.has(question.questionNumber)
+                                  ? "bg-yellow-50 border-2 border-yellow-200 rounded-lg p-4 -m-4"
+                                  : ""
+                              }`}
+                            >
+                              <div className="flex items-baseline gap-2">
+                                <button
+                                  onClick={() =>
+                                    toggleFlag(question.questionNumber)
+                                  }
+                                  className={`shrink-0 transition-all ${
+                                    flaggedQuestions.has(
+                                      question.questionNumber,
+                                    )
+                                      ? "text-yellow-500"
+                                      : "text-gray-300 hover:text-yellow-400"
+                                  }`}
+                                  title={
+                                    flaggedQuestions.has(
+                                      question.questionNumber,
+                                    )
+                                      ? "Unflag question"
+                                      : "Flag question"
+                                  }
+                                >
+                                  <Flag
+                                    size={18}
+                                    fill={
+                                      flaggedQuestions.has(
+                                        question.questionNumber,
+                                      )
+                                        ? "currentColor"
+                                        : "none"
+                                    }
+                                  />
+                                </button>
+                                <span className="font-bold text-gray-900 shrink-0">
+                                  {question.questionNumber}.
+                                </span>
+                                <p className="text-gray-800 flex-1">
+                                  {processText(questionText)}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                        </React.Fragment>
+                      );
+                    })}
                   </div>
                 ))}
               </div>
@@ -1354,10 +2069,91 @@ export default function ReadingTestPage() {
         </div>
       </div>
 
+      {/* Selection Popup */}
+      {sel && (
+        <div
+          className="highlight-menu fixed z-50 flex items-center gap-2 bg-white shadow-xl rounded-full p-2 border border-gray-200"
+          style={{
+            left: sel.clientX,
+            top: sel.clientY,
+            transform: "translateX(-50%)",
+          }}
+        >
+          <button
+            onClick={() => {
+              setSel(null);
+              window.getSelection()?.removeAllRanges();
+            }}
+            className="w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-gray-600 transition"
+            aria-label="Close"
+          >
+            <X size={16} />
+          </button>
+
+          <div className="w-px h-6 bg-gray-300"></div>
+
+          {HIGHLIGHT_COLORS.map((c) => (
+            <button
+              key={c.name}
+              onClick={() => {
+                const contextKey =
+                  sel.context === "passage"
+                    ? `passage-${currentPassage.passageNumber}`
+                    : `questions-${currentPassage.passageNumber}`;
+                setHighlights((prev) => ({
+                  ...prev,
+                  [contextKey]: [
+                    ...(prev[contextKey] || []),
+                    { start: sel.start, end: sel.end, color: c.name },
+                  ],
+                }));
+                setSel(null);
+                window.getSelection()?.removeAllRanges();
+              }}
+              className={`w-8 h-8 rounded-full ${c.bg} ${c.hover} transition`}
+              aria-label={c.name}
+            />
+          ))}
+
+          <div className="w-px h-6 bg-gray-300"></div>
+
+          <button
+            onClick={() => {
+              const contextKey =
+                sel.context === "passage"
+                  ? `passage-${currentPassage.passageNumber}`
+                  : `questions-${currentPassage.passageNumber}`;
+              const currentHighlights = highlights[contextKey] || [];
+              setHighlights((prev) => ({
+                ...prev,
+                [contextKey]: [
+                  ...currentHighlights,
+                  {
+                    start: sel.start,
+                    end: sel.end,
+                    color: "yellow",
+                    note: "",
+                  },
+                ],
+              }));
+              setActiveKey(contextKey);
+              setActiveIndex(currentHighlights.length);
+              setNoteText("");
+              setSel(null);
+              window.getSelection()?.removeAllRanges();
+              setNoteModal(true);
+            }}
+            className="w-8 h-8 rounded-full bg-gray-800 text-white hover:bg-gray-900 flex items-center justify-center transition"
+            aria-label="Add note"
+          >
+            +
+          </button>
+        </div>
+      )}
+
       {/* Notes Sidebar */}
       {showNotesSidebar && (
         <div className="fixed top-0 right-0 h-full w-96 bg-white shadow-2xl border-l-2 border-purple-200 z-40 flex flex-col">
-          {/* Sidebar Header */}
           <div className="bg-linear-to-r from-purple-500 to-purple-600 px-6 py-4 flex items-center justify-between">
             <h3 className="text-xl font-bold text-white flex items-center gap-2">
               📝 My Notes
@@ -1370,54 +2166,64 @@ export default function ReadingTestPage() {
             </button>
           </div>
 
-          {/* Notes Content */}
           <div className="flex-1 overflow-y-auto p-6">
-            {Object.entries(highlights).map(
-              ([passageNum, passageHighlights]) => {
-                const notesInPassage = passageHighlights.filter((h) => h.note);
-                if (notesInPassage.length === 0) return null;
+            {Object.entries(highlights).map(([key, contextHighlights]) => {
+              const notesInContext = contextHighlights.filter((h) => h.note);
+              if (notesInContext.length === 0) return null;
 
-                return (
-                  <div key={passageNum} className="mb-6">
-                    <h4 className="font-bold text-gray-800 mb-3 pb-2 border-b-2 border-purple-200">
-                      Passage {passageNum}
-                    </h4>
-                    <div className="space-y-3">
-                      {notesInPassage.map((highlight, idx) => {
-                        const passage = test.passages.find(
-                          (p: any) => p.passageNumber === parseInt(passageNum),
-                        );
-                        const highlightedText = passage
-                          ? passage.content.slice(
-                              highlight.start,
-                              highlight.end,
-                            )
-                          : "";
-                        const color = HIGHLIGHT_COLORS.find(
-                          (c) => c.name === highlight.color,
-                        );
+              const isPassage = key.startsWith("passage-");
+              const passageNum = key.split("-")[1];
 
-                        return (
-                          <div
-                            key={idx}
-                            className={`p-4 rounded-lg border-2 ${
-                              color?.border || "border-gray-200"
-                            } ${color?.bg || "bg-gray-50"}`}
-                          >
-                            <div className="text-sm text-gray-600 mb-2 font-medium line-clamp-2">
-                              "{highlightedText}"
-                            </div>
-                            <div className="text-sm text-gray-800 bg-white p-2 rounded border border-gray-200">
-                              {highlight.note}
-                            </div>
+              return (
+                <div key={key} className="mb-6">
+                  <h4 className="font-bold text-gray-800 mb-3 pb-2 border-b-2 border-purple-200">
+                    {isPassage
+                      ? `Passage ${passageNum}`
+                      : `Questions - Passage ${passageNum}`}
+                  </h4>
+                  <div className="space-y-3">
+                    {notesInContext.map((highlight, idx) => {
+                      const passage = test.passages.find(
+                        (p: any) => p.passageNumber === parseInt(passageNum),
+                      );
+
+                      let highlightedText = "";
+                      if (isPassage && passage) {
+                        highlightedText = passage.content.slice(
+                          highlight.start,
+                          highlight.end,
+                        );
+                      } else {
+                        highlightedText = allQuestionsText.slice(
+                          highlight.start,
+                          highlight.end,
+                        );
+                      }
+
+                      const color = HIGHLIGHT_COLORS.find(
+                        (c) => c.name === highlight.color,
+                      );
+
+                      return (
+                        <div
+                          key={idx}
+                          className={`p-4 rounded-lg border-2 ${
+                            color?.border || "border-gray-200"
+                          } ${color?.bg || "bg-gray-50"}`}
+                        >
+                          <div className="text-sm text-gray-600 mb-2 font-medium line-clamp-2">
+                            "{highlightedText}"
                           </div>
-                        );
-                      })}
-                    </div>
+                          <div className="text-sm text-gray-800 bg-white p-2 rounded border border-gray-200">
+                            {highlight.note}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                );
-              },
-            )}
+                </div>
+              );
+            })}
 
             {Object.values(highlights).every(
               (h) => h.filter((item) => item.note).length === 0,
@@ -1434,41 +2240,133 @@ export default function ReadingTestPage() {
         </div>
       )}
 
-      {/* Navigation Footer - Compact */}
-      <div className="bg-white border-t-2 border-purple-100 shrink-0 shadow-lg">
-        <div className="max-w-full mx-auto px-6 py-2.5">
-          <div className="flex items-center justify-between">
-            <div className="flex gap-2">
-              {test.passages.map((_: any, idx: number) => (
-                <button
-                  key={idx}
-                  onClick={() => router.push(`/reading/${testId}?part=${idx}`)}
-                  className={`px-4 py-1.5 rounded-lg font-bold text-sm transition-all transform hover:scale-105 ${
-                    idx === currentPart
-                      ? "bg-linear-to-r from-purple-500 to-purple-600 text-white shadow-md"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200"
-                  }`}
-                >
-                  {idx + 1}
-                </button>
-              ))}
-            </div>
-
-            <div className="flex gap-3">
+      {/* Navigation Footer - Enhanced with Question Numbers */}
+      <div className="bg-white border-t-2 border-gray-200 shrink-0 shadow-lg">
+        <div className="max-w-full mx-auto px-6 py-3">
+          <div className="flex items-center justify-between gap-6">
+            {/* Left: Part Navigation */}
+            <div className="flex items-center gap-3">
               <button
                 onClick={goToPreviousPart}
                 disabled={currentPart === 0}
-                className="px-6 py-1.5 border border-gray-300 text-gray-700 rounded-lg text-sm hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed font-semibold transition-all"
+                className="p-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                title="Previous Part"
               >
-                ← Previous
+                <ChevronLeft size={20} />
               </button>
+
+              <div className="flex gap-2">
+                {test.passages.map((_: any, idx: number) => (
+                  <button
+                    key={idx}
+                    onClick={() =>
+                      router.push(`/reading/${testId}?part=${idx}`)
+                    }
+                    className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${
+                      idx === currentPart
+                        ? "bg-[#9C74FF] text-white shadow-md"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300"
+                    }`}
+                  >
+                    Part {idx + 1}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Center: Question Numbers */}
+            <div className="flex-1 flex justify-center">
+              <div className="flex gap-1 flex-wrap max-w-3xl">
+                {currentPassage.questions.map((question: any) => {
+                  const isAnswered = answers[question.questionNumber];
+                  const isFlagged = flaggedQuestions.has(
+                    question.questionNumber,
+                  );
+
+                  return (
+                    <button
+                      key={question.questionNumber}
+                      onClick={() => {
+                        const questionElement = document.getElementById(
+                          `question-${question.questionNumber}`,
+                        );
+                        if (questionElement) {
+                          questionElement.scrollIntoView({
+                            behavior: "smooth",
+                            block: "start",
+                            inline: "nearest",
+                          });
+                          // Add extra offset after scroll
+                          setTimeout(() => {
+                            if (questionContainerRef.current) {
+                              questionContainerRef.current.scrollTop -= 100;
+                            }
+                          }, 100);
+                        }
+                      }}
+                      className={`relative min-w-10 h-10 px-3 rounded-md font-semibold text-sm transition-all border ${
+                        isFlagged
+                          ? "bg-yellow-100 border-yellow-400 text-yellow-800 hover:bg-yellow-200"
+                          : isAnswered
+                            ? "bg-green-100 border-green-400 text-green-800 hover:bg-green-200"
+                            : "bg-white border-gray-300 text-gray-700 hover:bg-gray-100"
+                      }`}
+                      title={`Question ${question.questionNumber}${isFlagged ? " (Flagged)" : ""}${isAnswered ? " (Answered)" : ""}`}
+                    >
+                      {question.questionNumber}
+                      {isFlagged && (
+                        <Flag
+                          size={10}
+                          className="absolute -top-1 -right-1 text-yellow-600"
+                          fill="currentColor"
+                        />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Right: Part Info and Next */}
+            <div className="flex items-center gap-3">
+              <div className="text-sm font-semibold text-gray-600">
+                {currentPassage.questions[0]?.questionNumber || 0}/
+                {test.passages.reduce(
+                  (sum: number, p: any) => sum + p.questions.length,
+                  0,
+                )}
+              </div>
+
               <button
                 onClick={goToNextPart}
                 disabled={currentPart === test.passages.length - 1}
-                className="px-6 py-1.5 bg-linear-to-r from-purple-500 to-purple-600 text-white rounded-lg text-sm hover:from-purple-600 hover:to-purple-700 disabled:opacity-30 disabled:cursor-not-allowed font-semibold shadow-md transition-all"
+                className="px-6 py-2 bg-[#9C74FF] text-white rounded-lg hover:bg-[#8a62e0] disabled:opacity-30 disabled:cursor-not-allowed font-semibold shadow-md transition-all flex items-center gap-2"
               >
-                Next →
+                Next
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
               </button>
+
+              {currentPart === test.passages.length - 1 && (
+                <button
+                  onClick={() => setShowSubmitModal(true)}
+                  className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold shadow-md transition-all flex items-center gap-2"
+                >
+                  <CheckCircle2 size={18} />
+                  Finish
+                </button>
+              )}
             </div>
           </div>
         </div>

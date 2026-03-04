@@ -71,6 +71,7 @@ export default function DashboardPage() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
+      setError(""); // Clear previous errors
       const response = await fetch("/api/user/stats");
 
       if (!response.ok) {
@@ -93,13 +94,21 @@ export default function DashboardPage() {
   };
 
   useEffect(() => {
+    // Don't do anything while session is loading
     if (status === "loading") return;
+
+    // Redirect to sign-in if no session
     if (!session) {
       router.push("/sign-in");
       return;
     }
-    fetchDashboardData();
-  }, [session, status, router]);
+
+    // Only fetch if we don't have data yet
+    // This prevents re-fetching when session object updates but user is same
+    if (!data) {
+      fetchDashboardData();
+    }
+  }, [status]); // Removed session, router from dependencies to prevent unnecessary re-renders
 
   const getTestIcon = (type: string) => {
     switch (type.toLowerCase()) {
