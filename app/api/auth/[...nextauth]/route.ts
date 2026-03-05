@@ -10,6 +10,7 @@ declare module "next-auth" {
     user: {
       id: string;
       role: string;
+      status: string;
       name?: string | null;
       email?: string | null;
       image?: string | null;
@@ -37,7 +38,7 @@ export const authOptions: NextAuthOptions = {
         await connectDB();
 
         const user = await User.findOne({ email: credentials.email }).select(
-          "+password"
+          "+password",
         );
 
         if (!user) {
@@ -45,7 +46,7 @@ export const authOptions: NextAuthOptions = {
         }
 
         const isPasswordValid = await user.comparePassword(
-          credentials.password
+          credentials.password,
         );
 
         if (!isPasswordValid) {
@@ -58,6 +59,7 @@ export const authOptions: NextAuthOptions = {
           name: user.name,
           image: user.avatar,
           role: user.role,
+          status: user.status || "free",
         };
       },
     }),
@@ -87,11 +89,14 @@ export const authOptions: NextAuthOptions = {
               password: Math.random().toString(36).slice(-8),
               isVerified: true,
               role: "user",
+              status: "free",
             });
 
             user.id = newUser._id.toString();
+            (user as any).status = newUser.status;
           } else {
             user.id = existingUser._id.toString();
+            (user as any).status = existingUser.status || "free";
           }
         }
         return true;
@@ -104,6 +109,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.role = (user as any).role || "user";
+        token.status = (user as any).status || "free";
       }
 
       if (account?.provider === "google" && !token.id) {
@@ -113,6 +119,7 @@ export const authOptions: NextAuthOptions = {
           if (dbUser) {
             token.id = dbUser._id.toString();
             token.role = dbUser.role;
+            token.status = dbUser.status || "free";
           }
         } catch (error) {
           console.error("JWT callback error:", error);
@@ -125,15 +132,13 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         session.user.id = token.id as string;
         session.user.role = (token.role as string) || "user";
+        session.user.status = (token.status as string) || "free";
       }
       return session;
     },
     async redirect({ url, baseUrl }) {
-      // Agar URL internal bo'lsa
       if (url.startsWith("/")) return `${baseUrl}${url}`;
-      // Agar URL baseUrl bilan boshlanayotgan bo'lsa
       if (url.startsWith(baseUrl)) return url;
-      // Default: home page
       return baseUrl;
     },
   },

@@ -6,6 +6,7 @@ export interface IUser extends Document {
   email: string;
   password: string;
   role: "user" | "admin";
+  status: "free" | "premium" | "vip";
   isVerified: boolean;
   verificationToken?: string;
   resetPasswordToken?: string;
@@ -51,6 +52,11 @@ const UserSchema = new Schema<IUser>(
       enum: ["user", "admin"],
       default: "user",
     },
+    status: {
+      type: String,
+      enum: ["free", "premium", "vip"],
+      default: "free",
+    },
     isVerified: {
       type: Boolean,
       default: false,
@@ -78,7 +84,7 @@ const UserSchema = new Schema<IUser>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Password hash qilish (save qilishdan oldin)
@@ -95,7 +101,7 @@ UserSchema.pre("save", async function (this: IUser) {
 
 // Password solishtirish method
 UserSchema.methods.comparePassword = async function (
-  candidatePassword: string
+  candidatePassword: string,
 ): Promise<boolean> {
   try {
     return await bcrypt.compare(candidatePassword, this.password);

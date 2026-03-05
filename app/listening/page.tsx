@@ -14,6 +14,7 @@ import {
   Volume2,
   User,
 } from "lucide-react";
+import AuthModal from "../components/AuthModal";
 
 const API_BASE = "/api";
 
@@ -88,45 +89,7 @@ export default function ListeningTestsPage() {
   return (
     <div className="min-h-screen bg-[#F5F2FF]">
       {/* AUTH MODAL */}
-      {showAuthModal && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-8 max-w-md w-full border-2 border-[#9C74FF]">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-[#9C74FF]/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <User className="text-[#9C74FF]" />
-              </div>
-              <h3 className="text-2xl font-bold mb-3">
-                Authentication Required
-              </h3>
-              <p className="text-gray-600 mb-6">
-                Please sign in to start the test
-              </p>
-
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setShowAuthModal(false)}
-                  className="flex-1 border rounded-xl py-3"
-                >
-                  Cancel
-                </button>
-                <Link
-                  href="/sign-in"
-                  className="flex-1 text-center py-3 rounded-xl text-white font-semibold bg-[#9C74FF]"
-                >
-                  Sign In
-                </Link>
-              </div>
-
-              <Link
-                href="/sign-up"
-                className="block mt-3 text-sm text-[#9C74FF]"
-              >
-                Create account
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
+      {showAuthModal && <AuthModal setShowAuthModal={setShowAuthModal} />}
 
       <main className="max-w-7xl mx-auto px-6 py-12">
         {/* HERO */}

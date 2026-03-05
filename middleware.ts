@@ -9,10 +9,18 @@ export default withAuth(
     callbacks: {
       authorized: ({ token }) => !!token,
     },
-  }
+  },
 );
 
 // Protected routes
 export const config = {
-  matcher: ["/dashboard/:path*", "/tests/:path*", "/profile/:path*"],
+  matcher: [
+    "/dashboard/:path*",
+    "/tests/:path*",
+    "/profile/:path*",
+    "/reading/test/:path*",
+    "/listening/test/:path*",
+    "/writing/:path*",
+    "/speaking/:path*",
+  ],
 };

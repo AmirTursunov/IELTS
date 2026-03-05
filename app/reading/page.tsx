@@ -13,6 +13,7 @@ import {
   Award,
   User,
 } from "lucide-react";
+import AuthModal from "../components/AuthModal";
 
 const API_BASE = "/api";
 
@@ -100,43 +101,7 @@ export default function ReadingTestsPage() {
   return (
     <div className="min-h-screen bg-linear-to-br from-purple-50 via-violet-50 to-purple-100">
       {/* Auth Required Modal */}
-      {showAuthModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 border-2 border-[#9C74FF]">
-            <div className="text-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-4">
-                <User className="w-8 h-8 text-red-600" />
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                Authentication Required
-              </h3>
-              <p className="text-gray-600 mb-6">
-                You need to sign in or create an account to take this test.
-              </p>
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setShowAuthModal(false)}
-                  className="flex-1 px-6 py-3 border-2 border-gray-300 rounded-xl text-gray-700 font-semibold hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-                <Link
-                  href="/sign-in"
-                  className="flex-1 px-6 py-3 bg-linear-to-r from-cyan-500 to-blue-600 text-white rounded-xl font-semibold hover:from-cyan-600 hover:to-blue-700 shadow-md text-center"
-                >
-                  Sign In
-                </Link>
-              </div>
-              <Link
-                href="/sign-up"
-                className="block mt-3 text-sm text-cyan-600 hover:text-cyan-700 font-semibold"
-              >
-                Don't have an account? Sign up
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
+      {showAuthModal && <AuthModal setShowAuthModal={setShowAuthModal} />}
 
       <main className="max-w-7xl mx-auto px-6 py-12">
         {/* Hero Section */}

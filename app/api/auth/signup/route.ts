@@ -12,14 +12,14 @@ export async function POST(request: NextRequest) {
     if (!name || !email || !password) {
       return NextResponse.json(
         { success: false, error: "All fields are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (name.trim().length < 2) {
       return NextResponse.json(
         { success: false, error: "Name must be at least 2 characters" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -27,14 +27,14 @@ export async function POST(request: NextRequest) {
     if (!emailRegex.test(email)) {
       return NextResponse.json(
         { success: false, error: "Please enter a valid email address" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (password.length < 6) {
       return NextResponse.json(
         { success: false, error: "Password must be at least 6 characters" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
     if (existingUser) {
       return NextResponse.json(
         { success: false, error: "User with this email already exists" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -53,6 +53,7 @@ export async function POST(request: NextRequest) {
       email: email.toLowerCase(),
       password,
       role: "user",
+      status: "free",
       isVerified: false,
     });
 
@@ -64,33 +65,34 @@ export async function POST(request: NextRequest) {
           id: user._id.toString(),
           name: user.name,
           email: user.email,
+          status: user.status,
         },
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error: any) {
     console.error("Signup error:", error);
 
     if (error.name === "ValidationError") {
       const messages = Object.values(error.errors).map(
-        (err: any) => err.message
+        (err: any) => err.message,
       );
       return NextResponse.json(
         { success: false, error: messages[0] },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (error.code === 11000) {
       return NextResponse.json(
         { success: false, error: "User with this email already exists" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     return NextResponse.json(
       { success: false, error: "Failed to create account. Please try again." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
