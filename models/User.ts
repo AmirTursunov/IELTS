@@ -7,6 +7,7 @@ export interface IUser extends Document {
   password: string;
   role: "user" | "admin";
   status: "free" | "premium" | "vip";
+  statusExpiry?: Date; // ✅ Yangi - status tugash sanasi
   isVerified: boolean;
   verificationToken?: string;
   resetPasswordToken?: string;
@@ -45,7 +46,7 @@ const UserSchema = new Schema<IUser>(
       type: String,
       required: [true, "Password is required"],
       minlength: [6, "Password must be at least 6 characters"],
-      select: false, // Default query larda password qaytmaydi
+      select: false,
     },
     role: {
       type: String,
@@ -56,6 +57,10 @@ const UserSchema = new Schema<IUser>(
       type: String,
       enum: ["free", "premium", "vip"],
       default: "free",
+    },
+    statusExpiry: {
+      type: Date,
+      default: null,
     },
     isVerified: {
       type: Boolean,
@@ -77,7 +82,6 @@ const UserSchema = new Schema<IUser>(
         completedAt: {
           type: Date,
           default: Date.now,
-          expires: 60,
         },
       },
     ],
@@ -87,7 +91,7 @@ const UserSchema = new Schema<IUser>(
   },
 );
 
-// Password hash qilish (save qilishdan oldin)
+// Password hash
 UserSchema.pre("save", async function (this: IUser) {
   if (!this.isModified("password")) return;
 
@@ -99,7 +103,7 @@ UserSchema.pre("save", async function (this: IUser) {
   }
 });
 
-// Password solishtirish method
+// Password compare
 UserSchema.methods.comparePassword = async function (
   candidatePassword: string,
 ): Promise<boolean> {

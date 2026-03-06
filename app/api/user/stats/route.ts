@@ -81,6 +81,38 @@ export async function GET(
       );
     }
 
+    // Admin uchun DB ga bormaslik — "admin-id" valid ObjectId emas
+    if (session.user.id === "admin-id" || session.user.role === "admin") {
+      return NextResponse.json(
+        {
+          success: true,
+          data: {
+            stats: {
+              totalTests: 0,
+              averageBand: 0,
+              studyStreak: 0,
+              hoursStudied: 0,
+            },
+            recentTests: [],
+            performanceByType: {
+              reading: 0,
+              listening: 0,
+              speaking: 0,
+              writing: 0,
+            },
+            user: {
+              name: session.user.name || "Admin",
+              email: session.user.email || "",
+              avatar: session.user.image || undefined,
+              role: "admin",
+              joinedAt: new Date(),
+            },
+          },
+        },
+        { status: 200 },
+      );
+    }
+
     await connectDB();
 
     const user = await User.findById(session.user.id).lean<{

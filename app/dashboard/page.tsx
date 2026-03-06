@@ -6,8 +6,6 @@ import { redirect, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
-  User,
-  Mail,
   Calendar,
   Trophy,
   TrendingUp,

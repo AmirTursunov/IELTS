@@ -11,6 +11,7 @@ declare module "next-auth" {
       id: string;
       role: string;
       status: string;
+      statusExpiry?: string;
       name?: string | null;
       email?: string | null;
       image?: string | null;
@@ -30,11 +31,30 @@ export const authOptions: NextAuthOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         if (!credentials?.email || !credentials?.password) {
           throw new Error("Please enter email and password");
         }
 
+        // ✅ ADMIN CHECK - .env'dan
+        const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+        const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+
+        if (
+          credentials.email === ADMIN_EMAIL &&
+          credentials.password === ADMIN_PASSWORD
+        ) {
+          return {
+            id: "admin-id",
+            email: ADMIN_EMAIL,
+            name: "Admin",
+            image: undefined,
+            role: "admin",
+            status: "vip",
+          };
+        }
+
+        // Regular user check
         await connectDB();
 
         const user = await User.findOne({ email: credentials.email }).select(
@@ -53,13 +73,21 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Invalid email or password");
         }
 
+        // Check expiry
+        if (user.statusExpiry && new Date(user.statusExpiry) < new Date()) {
+          user.status = "free";
+          user.statusExpiry = null;
+          await user.save();
+        }
+
         return {
           id: user._id.toString(),
           email: user.email,
           name: user.name,
           image: user.avatar,
           role: user.role,
-          status: user.status || "free",
+          status: user.status,
+          statusExpiry: user.statusExpiry?.toISOString(),
         };
       },
     }),
@@ -95,8 +123,19 @@ export const authOptions: NextAuthOptions = {
             user.id = newUser._id.toString();
             (user as any).status = newUser.status;
           } else {
+            if (
+              existingUser.statusExpiry &&
+              new Date(existingUser.statusExpiry) < new Date()
+            ) {
+              existingUser.status = "free";
+              existingUser.statusExpiry = null;
+              await existingUser.save();
+            }
+
             user.id = existingUser._id.toString();
-            (user as any).status = existingUser.status || "free";
+            (user as any).status = existingUser.status;
+            (user as any).statusExpiry =
+              existingUser.statusExpiry?.toISOString();
           }
         }
         return true;
@@ -105,21 +144,35 @@ export const authOptions: NextAuthOptions = {
         return false;
       }
     },
-    async jwt({ token, user, account }) {
+    async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
         token.role = (user as any).role || "user";
         token.status = (user as any).status || "free";
+        token.statusExpiry = (user as any).statusExpiry;
       }
 
-      if (account?.provider === "google" && !token.id) {
+      // Skip DB check for admin
+      if (token.email === process.env.ADMIN_EMAIL) {
+        return token;
+      }
+
+      // Check expiry for regular users
+      if (token.id && !user && token.id !== "admin-id") {
         try {
           await connectDB();
-          const dbUser = await User.findOne({ email: token.email });
+          const dbUser = await User.findById(token.id);
           if (dbUser) {
-            token.id = dbUser._id.toString();
-            token.role = dbUser.role;
-            token.status = dbUser.status || "free";
+            if (
+              dbUser.statusExpiry &&
+              new Date(dbUser.statusExpiry) < new Date()
+            ) {
+              dbUser.status = "free";
+              dbUser.statusExpiry = null;
+              await dbUser.save();
+            }
+            token.status = dbUser.status;
+            token.statusExpiry = dbUser.statusExpiry?.toISOString();
           }
         } catch (error) {
           console.error("JWT callback error:", error);
@@ -133,10 +186,16 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id as string;
         session.user.role = (token.role as string) || "user";
         session.user.status = (token.status as string) || "free";
+        session.user.statusExpiry = token.statusExpiry as string;
       }
       return session;
     },
     async redirect({ url, baseUrl }) {
+      // ✅ Admin -> /admin'ga redirect
+      if (url.includes("role=admin") || url.includes("/admin")) {
+        return `${baseUrl}/admin`;
+      }
+
       if (url.startsWith("/")) return `${baseUrl}${url}`;
       if (url.startsWith(baseUrl)) return url;
       return baseUrl;
