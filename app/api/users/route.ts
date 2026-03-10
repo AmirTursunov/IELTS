@@ -9,7 +9,7 @@ export async function GET() {
 
     // 1. Barcha oddiy userlarni olamiz (adminlarni keragi yo'q)
     const users = await User.find({ role: "user" })
-      .select("name email status createdAt") // Faqat kerakli maydonlar
+      .select("name email status createdAt statusExpiry ") // Faqat kerakli maydonlar
       .sort({ createdAt: -1 })
       .lean();
 
@@ -44,6 +44,7 @@ export async function GET() {
         email: user.email,
         status: user.status,
         createdAt: user.createdAt,
+        statusExpiry: user.statusExpiry,
         tests: userStat.totalTests, // Real testlar soni
         score: userStat.avgScore > 0 ? userStat.avgScore.toFixed(1) : "-", // Real o'rtacha ball
       };

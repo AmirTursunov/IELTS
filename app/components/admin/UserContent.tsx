@@ -1,6 +1,17 @@
 "use client";
 import React, { FC, useEffect, useState } from "react";
-import { Search, Loader2, User as UserIcon, RefreshCw, X } from "lucide-react";
+import {
+  Search,
+  Loader2,
+  User as UserIcon,
+  RefreshCw,
+  X,
+  Mail,
+  Clock,
+  Crown,
+  Shield,
+  CalendarCheck,
+} from "lucide-react";
 
 // API dan keladigan ma'lumot formati
 interface UserData {
@@ -25,6 +36,9 @@ export const UsersContent: FC = () => {
   );
   const [duration, setDuration] = useState<number>(1);
   const [updating, setUpdating] = useState<boolean>(false);
+  const [showInfoModal, setShowInfoModal] = useState<boolean>(false);
+  const [infoUser, setInfoUser] = useState<UserData | null>(null);
+  const [sendingEmail, setSendingEmail] = useState<boolean>(false);
 
   useEffect(() => {
     fetchUsers();
@@ -42,6 +56,33 @@ export const UsersContent: FC = () => {
       console.error("Error loading users:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleOpenInfoModal = (user: UserData) => {
+    setInfoUser(user);
+    setShowInfoModal(true);
+  };
+
+  const handleSendEmail = async () => {
+    if (!infoUser) return;
+    setSendingEmail(true);
+    try {
+      const res = await fetch(`/api/admin/users/${infoUser._id}/notify`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "status" }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert("Email sent successfully!");
+      } else {
+        alert(data.error || "Failed to send email");
+      }
+    } catch {
+      alert("Error sending email");
+    } finally {
+      setSendingEmail(false);
     }
   };
 
@@ -85,23 +126,39 @@ export const UsersContent: FC = () => {
       (u.email?.toLowerCase() || "").includes(searchTerm.toLowerCase()),
   );
 
-  const getStatusBadge = (status: string, expiry?: string) => {
+  const getStatusBadge = (
+    status: string,
+    expiry?: string,
+    onClick?: () => void,
+  ) => {
     const isExpired = expiry && new Date(expiry) < new Date();
-    const baseClasses = "px-3 py-1 rounded-full text-xs font-bold";
+    const baseClasses =
+      "px-3 py-1 rounded-full text-xs font-bold cursor-pointer hover:opacity-80 transition-opacity select-none";
 
     if (status === "free" || isExpired) {
       return (
-        <span className={`${baseClasses} bg-gray-100 text-gray-700`}>Free</span>
+        <span
+          onClick={onClick}
+          className={`${baseClasses} bg-gray-100 text-gray-700`}
+        >
+          Free
+        </span>
       );
     } else if (status === "premium") {
       return (
-        <span className={`${baseClasses} bg-blue-100 text-blue-700`}>
+        <span
+          onClick={onClick}
+          className={`${baseClasses} bg-blue-100 text-blue-700 ring-1 ring-blue-200`}
+        >
           Premium
         </span>
       );
     } else if (status === "vip") {
       return (
-        <span className={`${baseClasses} bg-purple-100 text-purple-700`}>
+        <span
+          onClick={onClick}
+          className={`${baseClasses} bg-purple-100 text-purple-700 ring-1 ring-purple-200`}
+        >
           VIP
         </span>
       );
@@ -206,12 +263,8 @@ export const UsersContent: FC = () => {
                       </td>
                       <td className="px-6 py-4">
                         <div>
-                          {getStatusBadge(user.status, user.statusExpiry)}
-                          {user.statusExpiry && !isExpired && (
-                            <div className="text-xs text-gray-500 mt-1">
-                              Until{" "}
-                              {new Date(user.statusExpiry).toLocaleDateString()}
-                            </div>
+                          {getStatusBadge(user.status, user.statusExpiry, () =>
+                            handleOpenInfoModal(user),
                           )}
                           {isExpired && (
                             <div className="text-xs text-red-500 mt-1">
@@ -257,6 +310,155 @@ export const UsersContent: FC = () => {
           )}
         </div>
       </div>
+
+      {/* Status Info Modal */}
+      {showInfoModal &&
+        infoUser &&
+        (() => {
+          const isExpired =
+            infoUser.statusExpiry &&
+            new Date(infoUser.statusExpiry) < new Date();
+          const expDate = infoUser.statusExpiry
+            ? new Date(infoUser.statusExpiry)
+            : null;
+          const daysLeft = expDate
+            ? Math.ceil(
+                (expDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24),
+              )
+            : null;
+
+          const statusColors: Record<string, string> = {
+            vip: "from-purple-500 to-indigo-600",
+            premium: "from-blue-500 to-cyan-600",
+            free: "from-gray-400 to-gray-500",
+          };
+          const gradient = statusColors[infoUser.status] || statusColors.free;
+
+          return (
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+                {/* Header */}
+                <div className={`bg-linear-to-r ${gradient} p-6 text-white`}>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center text-xl font-bold">
+                        {infoUser.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="font-bold text-lg leading-tight">
+                          {infoUser.name}
+                        </p>
+                        <p className="text-white/70 text-sm">
+                          {infoUser.email}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setShowInfoModal(false)}
+                      className="text-white/70 hover:text-white transition"
+                    >
+                      <X size={22} />
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {infoUser.status === "vip" ? (
+                      <Crown size={18} />
+                    ) : infoUser.status === "premium" ? (
+                      <Shield size={18} />
+                    ) : null}
+                    <span className="text-2xl font-extrabold capitalize">
+                      {infoUser.status}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Body */}
+                <div className="p-6 space-y-4">
+                  {/* Expiry info */}
+                  {infoUser.status && expDate ? (
+                    <div
+                      className={`rounded-xl p-4 ${isExpired ? "bg-red-50 border border-red-200" : "bg-gray-50 border border-gray-200"}`}
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <CalendarCheck
+                          size={16}
+                          className={
+                            isExpired ? "text-red-500" : "text-gray-500"
+                          }
+                        />
+                        <span className="text-xs font-bold text-gray-500 uppercase">
+                          Expiry Date
+                        </span>
+                      </div>
+                      <p
+                        className={`text-base font-bold ${isExpired ? "text-red-600" : "text-gray-800"}`}
+                      >
+                        {expDate.toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })}
+                      </p>
+                      {isExpired ? (
+                        <p className="text-xs text-red-500 mt-1 font-medium">
+                          ⚠ Subscription expired
+                        </p>
+                      ) : (
+                        <div className="flex items-center gap-1 mt-1">
+                          <Clock size={12} className="text-green-500" />
+                          <p className="text-xs text-green-600 font-medium">
+                            {daysLeft} days remaining
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+                      <div className="flex items-center gap-2">
+                        <Clock size={16} className="text-gray-400" />
+                        <span className="text-sm text-gray-500">
+                          No active subscription
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Joined date */}
+                  <div className="flex items-center justify-between text-sm text-gray-500">
+                    <span>Member since</span>
+                    <span className="font-medium text-gray-700">
+                      {new Date(infoUser.createdAt).toLocaleDateString(
+                        "en-US",
+                        { year: "numeric", month: "short", day: "numeric" },
+                      )}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="px-6 pb-6 flex gap-3">
+                  <button
+                    onClick={handleSendEmail}
+                    disabled={sendingEmail}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition disabled:opacity-50"
+                  >
+                    <Mail size={16} />
+                    {sendingEmail ? "Sending..." : "Send Email"}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowInfoModal(false);
+                      handleOpenStatusModal(infoUser);
+                    }}
+                    className="flex-1 px-4 py-2.5 border-2 border-gray-200 rounded-xl font-semibold text-gray-700 hover:bg-gray-50 transition"
+                  >
+                    Change Status
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
       {/* Status Change Modal */}
       {showStatusModal && selectedUser && (
