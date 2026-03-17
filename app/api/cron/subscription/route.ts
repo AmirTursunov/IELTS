@@ -1,10 +1,4 @@
 // app/api/cron/subscription/route.ts
-//
-// Vercel Cron yoki tashqi cron service (cron-job.org) orqali har kuni chaqiriladi.
-// vercel.json da:
-//   { "crons": [{ "path": "/api/cron/subscription", "schedule": "0 6 * * *" }] }
-//
-// So'rovda CRON_SECRET header tekshiriladi — ruxsatsiz kirishni bloklaydi.
 
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
@@ -16,7 +10,7 @@ import {
 } from "@/lib/email";
 
 export async function GET(request: NextRequest) {
-  // ── Auth: CRON_SECRET tekshiruvi ──────────────────────────────────────────
+  // Auth check
   const authHeader = request.headers.get("authorization");
   if (
     process.env.CRON_SECRET &&
@@ -28,22 +22,22 @@ export async function GET(request: NextRequest) {
   await connectDB();
 
   const now = new Date();
+  let reminded = 0;
+  let expired = 0;
+  const errors: string[] = [];
 
-  // ── 1. Eslatma: ertaga tugaydiganlar ─────────────────────────────────────
-  // statusExpiry holati: bugun + 24 soat oralig'idagilar
-  const reminderStart = new Date(now);
-  reminderStart.setHours(0, 0, 0, 0);
-  reminderStart.setDate(reminderStart.getDate() + 1); // ertaning boshlanishi
-
-  const reminderEnd = new Date(reminderStart);
-  reminderEnd.setHours(23, 59, 59, 999); // ertaning oxiri
+  // 1. Ertaga tugaydiganlar — eslatma
+  const tomorrowStart = new Date(now);
+  tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+  tomorrowStart.setHours(0, 0, 0, 0);
+  const tomorrowEnd = new Date(tomorrowStart);
+  tomorrowEnd.setHours(23, 59, 59, 999);
 
   const expiringSoon = await User.find({
     status: { $in: ["premium", "vip"] },
-    statusExpiry: { $gte: reminderStart, $lte: reminderEnd },
+    statusExpiry: { $gte: tomorrowStart, $lte: tomorrowEnd },
   }).select("name email status statusExpiry");
 
-  let remindedCount = 0;
   for (const user of expiringSoon) {
     try {
       const { subject, html } = buildExpiryReminderEmail({
@@ -52,45 +46,41 @@ export async function GET(request: NextRequest) {
         statusExpiry: user.statusExpiry!,
       });
       await sendEmail(user.email, subject, html);
-      remindedCount++;
-      console.log(`[CRON] Reminder sent → ${user.email}`);
-    } catch (err) {
-      console.error(`[CRON] Reminder failed → ${user.email}:`, err);
+      reminded++;
+    } catch (err: any) {
+      errors.push(`reminder:${user.email}:${err.message}`);
     }
   }
 
-  // ── 2. Expiry: muddati o'tganlarni free qilish ────────────────────────────
-  const expired = await User.find({
+  // 2. Muddati o'tganlar — free qilish + email
+  const expired_users = await User.find({
     status: { $in: ["premium", "vip"] },
     statusExpiry: { $lt: now },
   }).select("name email status statusExpiry");
 
-  let expiredCount = 0;
-  for (const user of expired) {
+  for (const user of expired_users) {
     try {
-      // Status'ni free qilish
       user.status = "free";
       user.statusExpiry = null;
       await user.save();
 
-      // Email yuborish
       const { subject, html } = buildStatusChangedEmail({
         name: user.name,
         status: "free",
         statusExpiry: null,
       });
       await sendEmail(user.email, subject, html);
-      expiredCount++;
-      console.log(`[CRON] Expired & notified → ${user.email}`);
-    } catch (err) {
-      console.error(`[CRON] Expire failed → ${user.email}:`, err);
+      expired++;
+    } catch (err: any) {
+      errors.push(`expire:${user.email}:${err.message}`);
     }
   }
 
+  // Minimal response — faqat raqamlar
   return NextResponse.json({
-    success: true,
-    reminded: remindedCount,
-    expired: expiredCount,
-    ranAt: now.toISOString(),
+    ok: true,
+    reminded,
+    expired,
+    errors: errors.length > 0 ? errors : undefined,
   });
 }
